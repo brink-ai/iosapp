@@ -1,0 +1,17 @@
+{
+    "model" : {
+        "id" : "61b097551efecf30109d32da",
+        "data": "This is a test sentence."
+    },
+    "pipeline": {
+        "name": "SingleNodePipeline",
+        "data": "This is a test sentence."
+    },
+    "metric": {
+        "id" : "639874ab506c987b1ae1acc6",
+        "data": {
+            "hypothesis": "hello world",
+            "reference": "hello world"
+        }
+    }
+}
