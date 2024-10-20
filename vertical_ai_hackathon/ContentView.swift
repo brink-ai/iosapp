@@ -15,6 +15,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var inputNode: AVAudioInputNode
     private var bus: AVAudioNodeBus
     private var audioFile: AVAudioFile?  // Store the audio file for saving input
+    private var sessionID: String?
 
     private var speechRecognizer: SFSpeechRecognizer?  // Speech recognizer for converting audio to text
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?  // Request for recognizing speech
@@ -123,16 +124,36 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     
     
     func sendTranscriptionToServer(text: String) {
-        guard let url = URL(string: "http://your-flask-server-url/endpoint") else {
+        guard let url = URL(string: "http://192.168.234.1:5001/run_agent") else {
             print("Invalid server URL")
             return
         }
+        
+        print(url)
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        let postString = "text=\(text)"
-        request.httpBody = postString.data(using: .utf8)
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        
+        print(request)
+
+        // Create the JSON body
+        var bodyDict: [String: Any] = [
+            "user_query": text,
+            "audio": true
+        ]
+
+        // Include session_id if available
+        if let sessionID = self.sessionID {
+            bodyDict["session_id"] = sessionID
+        }
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: bodyDict, options: [])
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        } catch {
+            print("Error serializing JSON: \(error)")
+            return
+        }
 
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
@@ -145,13 +166,44 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 return
             }
 
-            // Handle the received audio data
-            self.handleReceivedAudioData(data)
+            print(data)
+            // Handle the received data
+            self.handleServerResponse(data)
         }
 
         task.resume()
     }
+    
+    private func handleServerResponse(_ data: Data) {
+        do {
+            // Parse the JSON response
+            if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                // Extract session_id if available
+                if let newSessionID = jsonResponse["session_id"] as? String {
+                    self.sessionID = newSessionID
+                    print("Received session ID: \(self.sessionID!)")
+                }
 
+                // Handle the audio data if 'audio_data' key is present
+                if let audioBase64String = jsonResponse["audio_data"] as? String {
+                    // Decode the base64 string to Data
+                    if let audioData = Data(base64Encoded: audioBase64String) {
+                        self.handleReceivedAudioData(audioData)
+                    } else {
+                        print("Error decoding audio data")
+                    }
+                } else {
+                    print("No audio data received")
+                }
+            } else {
+                print("Invalid JSON response")
+            }
+        } catch {
+            print("Error parsing server response: \(error)")
+        }
+    }
+    
+    
     private func handleReceivedAudioData(_ data: Data) {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let audioFileURL = documentsPath.appendingPathComponent("responseAudio.m4a")
@@ -166,7 +218,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             print("Error saving audio file: \(error)")
         }
     }
-
+    
     private func playAudioFile(url: URL) {
         DispatchQueue.main.async {
             do {
