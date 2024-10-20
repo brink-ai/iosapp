@@ -1,8 +1,16 @@
 from flask import Flask, request, jsonify
 import os
 
+
 # Set the API key as an environment variable
 os.environ["TEAM_API_KEY"] = "4bf088eec18762baa35fffd45dec7901bb4d19521e6575cc36f0aac26eed5a09"
+import requests
+from playsound import playsound
+from pydub import AudioSegment
+from pydub.playback import play
+import io
+from audioprocessing import convert_text_to_audio, convert_with_synthesis
+
 
 from aixplain.factories import ModelFactory, AgentFactory
 
@@ -27,11 +35,9 @@ def run_therapist_agent(user_query, audio=False, session_id=None):
     session_id = agent_response["data"]["session_id"]
 
     if audio:
-        # Retrieve the speech synthesis agent
-        speech_agent = ModelFactory.get("618cfb3b0981fd60e021cb0e")
-        result = speech_agent.run(response)
-        audio_url = result["data"]
-        return response, session_id, audio_url
+       audio_wav = convert_text_to_audio(response)
+       audio_final_link = convert_with_synthesis(response)
+       return response, session_id, audio_final_link
 
     return response, session_id
 
@@ -48,11 +54,11 @@ def agent_endpoint():
     result = run_therapist_agent(user_query, audio=audio, session_id=session_id)
 
     if len(result) == 3:
-        response, session_id, audio_url = result
+        response, session_id, audio_link = result
         return jsonify({
             "response": response,
             "session_id": session_id,
-            "audio_url": audio_url
+            "audio_link": audio_link
         })
     else:
         response, session_id = result

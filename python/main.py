@@ -6,7 +6,10 @@ from aixplain.factories import ModelFactory, AgentFactory
 def run_therapist_agent(user_query, audio=False, session_id=None):
 
     # Retrieve the agent using the ID
-    agent = AgentFactory.get("67156f5cc784692b8d4c54a8")
+    # gpt 4o: 67156f5cc784692b8d4c54a8
+    # groq llama 3.1 70b: 6715762bc784692b8d4c56d6
+    # groq mixstral: 671576a557c705a318033e76
+    agent = AgentFactory.get("671576a557c705a318033e76")
 
     # Format the user query into the prompt
     prompt = f"You are a caring therapist. Based on {user_query}, give a supportive, unique response that acknowledges the user’s feelings and offers specific, actionable advice. Keep it under 200 words, avoiding generic statements."
@@ -21,10 +24,6 @@ def run_therapist_agent(user_query, audio=False, session_id=None):
     response = agent_response["data"]["output"]
     session_id = agent_response["data"]["session_id"]
 
-    # Print the results
-    print("Response:", response)
-    print("Session ID:", session_id)
-
     # If audio is enabled, play the audio response
     if audio:
         # Retrieve the speech synthesis agent
@@ -32,10 +31,23 @@ def run_therapist_agent(user_query, audio=False, session_id=None):
         result = speech_agent.run(response)
         audio_url = result["data"]
         print("Audio URL:", audio_url)
-        return session_id
+        return response, session_id
 
-    return session_id
+    return response, session_id
 
 
-user_query = "I feel overwhelmed by all the work I have to do."
-response1 = run_therapist_agent(user_query, audio=True)
+# get user input
+user_query = input("Hello! How are you feeling today? ")
+response, id = run_therapist_agent(user_query, audio=True)
+print(response)
+
+# Continue asking for input until the user types 'stop'
+while True:
+    user_query = input("How are you feeling now? (Type 'stop' to exit) ")
+    if user_query.lower() == 'stop':
+        print("Thank you for the conversation. Take care!")
+        break
+
+    # Run the agent for the next user query
+    response, session_id = run_therapist_agent(user_query, session_id=id)
+    print(response)

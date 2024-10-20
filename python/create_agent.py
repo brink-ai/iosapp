@@ -9,10 +9,10 @@ from aixplain.factories import AgentFactory
 
 
 therapist = AgentFactory.create(
-    name="Therapy Agent",
+    name="Therapy Agent3",
     description="Analyzing user input and providing therapy",
     # required llm_id
-    llm_id="6646261c6eb563165658bbb1" # GPT 4o
+    llm_id="65e1d442a4f0e436cfff4a20"
 )
 
 print("Therapy Agent id ", therapist.id)
