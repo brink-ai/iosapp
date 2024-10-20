@@ -6,56 +6,81 @@
 //
 
 import SwiftUI
-import SwiftData
+import Foundation
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @ObservedObject var audioManager = AudioManager()
+    @Environment(\.colorScheme) var colorScheme
+    @State var listening: Bool = true  // Default to listening for now
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        ZStack {
+            backgroundColor
+                .ignoresSafeArea()
+
+            VStack {
+                if listening {
+                    ListeningCircleView(level: audioManager.inputLevel)
+                } else {
+                    SpeakingCircleView(level: audioManager.inputLevel)
                 }
-                .onDelete(perform: deleteItems)
+                
+                Button(action: {
+                    audioManager.stopAudioEngine()  // Stop recording and send to Python
+                }) {
+                    Text("Send to Python")
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .padding()
             }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
         }
     }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
+    
+    private var backgroundColor: Color {
+        colorScheme == .dark ? .black : .white
     }
+}
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+struct ListeningCircleView: View {
+    var level: CGFloat
+    var body: some View {
+        ZStack {
+            CircleView(level: level, title: "Listening...")
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+struct SpeakingCircleView: View {
+    var level: CGFloat
+    var body: some View {
+        CircleView(level: level, title: "Speaking...")
+    }
+}
+
+struct CircleView: View {
+    var level: CGFloat
+    var title: String
+    
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(strokeColor, lineWidth: 10 + (level))  // Adjust line width more drastically
+                .frame(width: 200, height: 200)
+                .padding(20)
+            
+            Text(title)
+                .foregroundColor(strokeColor)
+                .font(.title)
+        }
+        .animation(.easeInOut(duration: 0.1), value: level)
+    }
+    
+    private var strokeColor: Color {
+        colorScheme == .dark ? .white : .black
+    }
 }

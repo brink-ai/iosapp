@@ -1,0 +1,15 @@
+{
+  "originHash" : "3690dd8a0ab7e2d99406b724f1c9b23ec02530f6d89e0f400580cac07c60ca9e",
+  "pins" : [
+    {
+      "identity" : "aixplainkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/aixplain/aiXplainKit",
+      "state" : {
+        "branch" : "main",
+        "revision" : "65cd50da6c73399943414ce95b8df3f665470b3c"
+      }
+    }
+  ],
+  "version" : 3
+}

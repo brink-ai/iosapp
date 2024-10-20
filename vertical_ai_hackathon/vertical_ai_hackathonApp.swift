@@ -25,7 +25,7 @@ struct vertical_ai_hackathonApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(listening: true)
         }
         .modelContainer(sharedModelContainer)
     }
