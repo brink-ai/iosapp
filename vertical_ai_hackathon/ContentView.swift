@@ -119,8 +119,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             }
         }
 
-        // Remove the tap installation here
-        // The tap is already installed in `reinstallAudioTap()`
     }
     
     
