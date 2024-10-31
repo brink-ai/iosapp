@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct vertical_ai_hackathonApp: App {
+struct theravoiceApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

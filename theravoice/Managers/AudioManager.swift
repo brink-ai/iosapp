@@ -16,6 +16,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     @Published var apiResponse: String = ""
     
     private var apiCheckTimer: Timer?
+    private var shouldStopRecording = false
     
     override init() {
         super.init()
@@ -24,7 +25,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func setupAudio() {
-        // Initialize audio session first
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetooth])
@@ -34,7 +34,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             
             print("Audio Session initialized with sample rate: \(session.sampleRate)")
             
-            // Initialize audio engine after session is set up
             audioEngine = AVAudioEngine()
             inputNode = audioEngine?.inputNode
             speechRecognizer = SFSpeechRecognizer(locale: .current)
@@ -52,31 +51,24 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             return
         }
         
-        // Reset state
+        shouldStopRecording = false
         transcribedText = ""
         apiResponse = ""
         
         do {
-            // Stop any existing audio
             if audioEngine.isRunning {
                 audioEngine.stop()
                 inputNode.removeTap(onBus: bus)
             }
             
-            // Ensure audio session is properly configured
             let audioSession = AVAudioSession.sharedInstance()
-            if !audioSession.isOtherAudioPlaying {
-                try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-            }
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
             
-            // Configure and start the engine
             try audioEngine.start()
-            
-            // Start speech recognition after engine is running
-            startSpeechRecognition()
-            
             isRecording = true
             print("Recording started successfully")
+            
+            startSpeechRecognition()
             
         } catch {
             print("Failed to start recording: \(error.localizedDescription)")
@@ -85,18 +77,27 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     func stopRecording() {
+        shouldStopRecording = true
+        
+        // Only stop immediately if we're not in the middle of processing
+        if recognitionTask?.state != .running {
+            performStopRecording()
+        } else {
+            // If we're still running, let the recognition task finish
+            recognitionRequest?.endAudio()
+        }
+    }
+    
+    private func performStopRecording() {
         guard let audioEngine = audioEngine,
               let inputNode = inputNode else { return }
         
-        // Remove tap first
         inputNode.removeTap(onBus: bus)
         
-        // Stop audio engine
         if audioEngine.isRunning {
             audioEngine.stop()
         }
         
-        // Clean up recognition
         recognitionRequest?.endAudio()
         recognitionRequest = nil
         recognitionTask?.cancel()
@@ -110,11 +111,9 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         guard let audioEngine = audioEngine,
               let inputNode = inputNode else { return }
         
-        // Reset any existing recognition task
         recognitionTask?.cancel()
         recognitionTask = nil
         
-        // Create new recognition request
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         
         guard let recognitionRequest = recognitionRequest else {
@@ -123,45 +122,51 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         }
         
         recognitionRequest.shouldReportPartialResults = true
+        recognitionRequest.taskHint = .dictation
         
-        // Configure recognition task
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
             
+            var isFinal = false
+            
             if let result = result {
+                isFinal = result.isFinal
                 DispatchQueue.main.async {
                     self.transcribedText = result.bestTranscription.formattedString
                     
-                    if result.isFinal {
+                    if isFinal {
+                        print("Final transcription: \(self.transcribedText)")
                         self.processTranscription(prompt: self.transcribedText)
-                        self.stopRecording()
+                        if self.shouldStopRecording {
+                            self.performStopRecording()
+                        }
                     }
                 }
             }
             
             if let error = error {
-                print("Speech recognition error: \(error)")
-                self.stopRecording()
+                print("Speech recognition error: \(error.localizedDescription)")
+                if self.shouldStopRecording {
+                    self.performStopRecording()
+                }
             }
         }
         
-        // Get the format that matches the audio session
         let recordingFormat = inputNode.inputFormat(forBus: bus)
         print("Recording format: \(recordingFormat)")
         
-            inputNode.installTap(onBus: bus,
-                               bufferSize: 1024,
-                               format: recordingFormat) { [weak self] buffer, _ in
-                guard let self = self else { return }
-                
-                self.recognitionRequest?.append(buffer)
-                
-                let level = self.calculateLevel(buffer)
+        inputNode.installTap(onBus: bus,
+                           bufferSize: 1024,
+                           format: recordingFormat) { [weak self] buffer, _ in
+            self?.recognitionRequest?.append(buffer)
+            
+            if let strongSelf = self {
+                let level = strongSelf.calculateLevel(buffer)
                 DispatchQueue.main.async {
-                    self.inputLevel = CGFloat(level)
+                    strongSelf.inputLevel = CGFloat(level)
                 }
             }
-
+        }
     }
     
     private func calculateLevel(_ buffer: AVAudioPCMBuffer) -> Float {
@@ -196,14 +201,24 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     private func processTranscription(prompt: String) {
+        guard !prompt.isEmpty else { return }
+        
+        print("Processing transcription: \(prompt)")
         apiCheckTimer?.invalidate()
         
+        // Send the transcription to the API
         Huggingface.sendTranscriptionToAPI(prompt: prompt)
         
+        // Start polling for the response
         apiCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] timer in
             if let response = Huggingface.apiResponse {
                 DispatchQueue.main.async {
-                    self?.apiResponse = response
+                    if !response.isEmpty {
+                        self?.apiResponse = response
+                        print("Received API response: \(response)")
+                    } else {
+                        self?.apiResponse = "Empty response received from API"
+                    }
                     self?.apiCheckTimer?.invalidate()
                     self?.apiCheckTimer = nil
                     Huggingface.apiResponse = nil
@@ -211,11 +226,16 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             }
         }
         
+        // Set a timeout for the API response
         DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
-            self?.apiCheckTimer?.invalidate()
-            self?.apiCheckTimer = nil
-            if self?.apiResponse.isEmpty ?? true {
-                self?.apiResponse = "No response received from API"
+            guard let self = self else { return }
+            
+            self.apiCheckTimer?.invalidate()
+            self.apiCheckTimer = nil
+            
+            if self.apiResponse.isEmpty {
+                self.apiResponse = "No response received from API"
+                print("API response timeout")
             }
         }
     }

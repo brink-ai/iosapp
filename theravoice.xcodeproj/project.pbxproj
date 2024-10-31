@@ -28,25 +28,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		E7A4E52E2CC58BF1000990A3 /* vertical_ai_hackathon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = vertical_ai_hackathon.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E7A4E5402CC58BF3000990A3 /* vertical_ai_hackathonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vertical_ai_hackathonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E7A4E54A2CC58BF3000990A3 /* vertical_ai_hackathonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = vertical_ai_hackathonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7A4E52E2CC58BF1000990A3 /* theravoice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = theravoice.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7A4E5402CC58BF3000990A3 /* theravoiceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = theravoiceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E7A4E54A2CC58BF3000990A3 /* theravoiceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = theravoiceUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E7A4E5302CC58BF1000990A3 /* vertical_ai_hackathon */ = {
+		E7A4E5302CC58BF1000990A3 /* theravoice */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = vertical_ai_hackathon;
-			sourceTree = "<group>";
-		};
-		E7A4E5432CC58BF3000990A3 /* vertical_ai_hackathonTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = vertical_ai_hackathonTests;
-			sourceTree = "<group>";
-		};
-		E7A4E54D2CC58BF3000990A3 /* vertical_ai_hackathonUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = vertical_ai_hackathonUITests;
+			path = theravoice;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -80,9 +70,7 @@
 		E7A4E5252CC58BF1000990A3 = {
 			isa = PBXGroup;
 			children = (
-				E7A4E5302CC58BF1000990A3 /* vertical_ai_hackathon */,
-				E7A4E5432CC58BF3000990A3 /* vertical_ai_hackathonTests */,
-				E7A4E54D2CC58BF3000990A3 /* vertical_ai_hackathonUITests */,
+				E7A4E5302CC58BF1000990A3 /* theravoice */,
 				E7A4E52F2CC58BF1000990A3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -90,9 +78,9 @@
 		E7A4E52F2CC58BF1000990A3 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E7A4E52E2CC58BF1000990A3 /* vertical_ai_hackathon.app */,
-				E7A4E5402CC58BF3000990A3 /* vertical_ai_hackathonTests.xctest */,
-				E7A4E54A2CC58BF3000990A3 /* vertical_ai_hackathonUITests.xctest */,
+				E7A4E52E2CC58BF1000990A3 /* theravoice.app */,
+				E7A4E5402CC58BF3000990A3 /* theravoiceTests.xctest */,
+				E7A4E54A2CC58BF3000990A3 /* theravoiceUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -100,9 +88,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E7A4E52D2CC58BF1000990A3 /* vertical_ai_hackathon */ = {
+		E7A4E52D2CC58BF1000990A3 /* theravoice */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E7A4E5542CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "vertical_ai_hackathon" */;
+			buildConfigurationList = E7A4E5542CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "theravoice" */;
 			buildPhases = (
 				E7A4E52A2CC58BF1000990A3 /* Sources */,
 				E7A4E52B2CC58BF1000990A3 /* Frameworks */,
@@ -113,19 +101,19 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				E7A4E5302CC58BF1000990A3 /* vertical_ai_hackathon */,
+				E7A4E5302CC58BF1000990A3 /* theravoice */,
 			);
-			name = vertical_ai_hackathon;
+			name = theravoice;
 			packageProductDependencies = (
 				E7A4E5622CC58ED9000990A3 /* aiXplainKit */,
 			);
 			productName = vertical_ai_hackathon;
-			productReference = E7A4E52E2CC58BF1000990A3 /* vertical_ai_hackathon.app */;
+			productReference = E7A4E52E2CC58BF1000990A3 /* theravoice.app */;
 			productType = "com.apple.product-type.application";
 		};
-		E7A4E53F2CC58BF3000990A3 /* vertical_ai_hackathonTests */ = {
+		E7A4E53F2CC58BF3000990A3 /* theravoiceTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E7A4E5572CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "vertical_ai_hackathonTests" */;
+			buildConfigurationList = E7A4E5572CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "theravoiceTests" */;
 			buildPhases = (
 				E7A4E53C2CC58BF3000990A3 /* Sources */,
 				E7A4E53D2CC58BF3000990A3 /* Frameworks */,
@@ -136,19 +124,16 @@
 			dependencies = (
 				E7A4E5422CC58BF3000990A3 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				E7A4E5432CC58BF3000990A3 /* vertical_ai_hackathonTests */,
-			);
-			name = vertical_ai_hackathonTests;
+			name = theravoiceTests;
 			packageProductDependencies = (
 			);
 			productName = vertical_ai_hackathonTests;
-			productReference = E7A4E5402CC58BF3000990A3 /* vertical_ai_hackathonTests.xctest */;
+			productReference = E7A4E5402CC58BF3000990A3 /* theravoiceTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		E7A4E5492CC58BF3000990A3 /* vertical_ai_hackathonUITests */ = {
+		E7A4E5492CC58BF3000990A3 /* theravoiceUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E7A4E55A2CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "vertical_ai_hackathonUITests" */;
+			buildConfigurationList = E7A4E55A2CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "theravoiceUITests" */;
 			buildPhases = (
 				E7A4E5462CC58BF3000990A3 /* Sources */,
 				E7A4E5472CC58BF3000990A3 /* Frameworks */,
@@ -159,14 +144,11 @@
 			dependencies = (
 				E7A4E54C2CC58BF3000990A3 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				E7A4E54D2CC58BF3000990A3 /* vertical_ai_hackathonUITests */,
-			);
-			name = vertical_ai_hackathonUITests;
+			name = theravoiceUITests;
 			packageProductDependencies = (
 			);
 			productName = vertical_ai_hackathonUITests;
-			productReference = E7A4E54A2CC58BF3000990A3 /* vertical_ai_hackathonUITests.xctest */;
+			productReference = E7A4E54A2CC58BF3000990A3 /* theravoiceUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -192,7 +174,7 @@
 					};
 				};
 			};
-			buildConfigurationList = E7A4E5292CC58BF1000990A3 /* Build configuration list for PBXProject "vertical_ai_hackathon" */;
+			buildConfigurationList = E7A4E5292CC58BF1000990A3 /* Build configuration list for PBXProject "theravoice" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -209,9 +191,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E7A4E52D2CC58BF1000990A3 /* vertical_ai_hackathon */,
-				E7A4E53F2CC58BF3000990A3 /* vertical_ai_hackathonTests */,
-				E7A4E5492CC58BF3000990A3 /* vertical_ai_hackathonUITests */,
+				E7A4E52D2CC58BF1000990A3 /* theravoice */,
+				E7A4E53F2CC58BF3000990A3 /* theravoiceTests */,
+				E7A4E5492CC58BF3000990A3 /* theravoiceUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -267,12 +249,12 @@
 /* Begin PBXTargetDependency section */
 		E7A4E5422CC58BF3000990A3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = E7A4E52D2CC58BF1000990A3 /* vertical_ai_hackathon */;
+			target = E7A4E52D2CC58BF1000990A3 /* theravoice */;
 			targetProxy = E7A4E5412CC58BF3000990A3 /* PBXContainerItemProxy */;
 		};
 		E7A4E54C2CC58BF3000990A3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = E7A4E52D2CC58BF1000990A3 /* vertical_ai_hackathon */;
+			target = E7A4E52D2CC58BF1000990A3 /* theravoice */;
 			targetProxy = E7A4E54B2CC58BF3000990A3 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -404,11 +386,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"vertical_ai_hackathon/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"theravoice/Preview Content\"";
 				DEVELOPMENT_TEAM = L7UDTQ6F5W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "vertical-ai-hackathon-Info.plist";
+				INFOPLIST_FILE = "theravoice-Info.plist";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"Used to record audio for conversation\"";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "\"Used to transcribe input speech\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -436,11 +418,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"vertical_ai_hackathon/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"theravoice/Preview Content\"";
 				DEVELOPMENT_TEAM = L7UDTQ6F5W;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "vertical-ai-hackathon-Info.plist";
+				INFOPLIST_FILE = "theravoice-Info.plist";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"Used to record audio for conversation\"";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "\"Used to transcribe input speech\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -476,7 +458,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/vertical_ai_hackathon.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/vertical_ai_hackathon";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/theravoice.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/theravoice";
 			};
 			name = Debug;
 		};
@@ -495,7 +477,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/vertical_ai_hackathon.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/vertical_ai_hackathon";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/theravoice.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/theravoice";
 			};
 			name = Release;
 		};
@@ -536,7 +518,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E7A4E5292CC58BF1000990A3 /* Build configuration list for PBXProject "vertical_ai_hackathon" */ = {
+		E7A4E5292CC58BF1000990A3 /* Build configuration list for PBXProject "theravoice" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E7A4E5522CC58BF3000990A3 /* Debug */,
@@ -545,7 +527,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E7A4E5542CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "vertical_ai_hackathon" */ = {
+		E7A4E5542CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "theravoice" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E7A4E5552CC58BF3000990A3 /* Debug */,
@@ -554,7 +536,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E7A4E5572CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "vertical_ai_hackathonTests" */ = {
+		E7A4E5572CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "theravoiceTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E7A4E5582CC58BF3000990A3 /* Debug */,
@@ -563,7 +545,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E7A4E55A2CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "vertical_ai_hackathonUITests" */ = {
+		E7A4E55A2CC58BF3000990A3 /* Build configuration list for PBXNativeTarget "theravoiceUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E7A4E55B2CC58BF3000990A3 /* Debug */,

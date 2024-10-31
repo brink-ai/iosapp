@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E7A4E52D2CC58BF1000990A3"
-               BuildableName = "vertical_ai_hackathon.app"
-               BlueprintName = "vertical_ai_hackathon"
-               ReferencedContainer = "container:vertical_ai_hackathon.xcodeproj">
+               BuildableName = "theravoice.app"
+               BlueprintName = "theravoice"
+               ReferencedContainer = "container:theravoice.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -36,9 +36,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E7A4E53F2CC58BF3000990A3"
-               BuildableName = "vertical_ai_hackathonTests.xctest"
-               BlueprintName = "vertical_ai_hackathonTests"
-               ReferencedContainer = "container:vertical_ai_hackathon.xcodeproj">
+               BuildableName = "theravoiceTests.xctest"
+               BlueprintName = "theravoiceTests"
+               ReferencedContainer = "container:theravoice.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -47,9 +47,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E7A4E5492CC58BF3000990A3"
-               BuildableName = "vertical_ai_hackathonUITests.xctest"
-               BlueprintName = "vertical_ai_hackathonUITests"
-               ReferencedContainer = "container:vertical_ai_hackathon.xcodeproj">
+               BuildableName = "theravoiceUITests.xctest"
+               BlueprintName = "theravoiceUITests"
+               ReferencedContainer = "container:theravoice.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -69,9 +69,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E7A4E52D2CC58BF1000990A3"
-            BuildableName = "vertical_ai_hackathon.app"
-            BlueprintName = "vertical_ai_hackathon"
-            ReferencedContainer = "container:vertical_ai_hackathon.xcodeproj">
+            BuildableName = "theravoice.app"
+            BlueprintName = "theravoice"
+            ReferencedContainer = "container:theravoice.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -86,9 +86,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E7A4E52D2CC58BF1000990A3"
-            BuildableName = "vertical_ai_hackathon.app"
-            BlueprintName = "vertical_ai_hackathon"
-            ReferencedContainer = "container:vertical_ai_hackathon.xcodeproj">
+            BuildableName = "theravoice.app"
+            BlueprintName = "theravoice"
+            ReferencedContainer = "container:theravoice.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
