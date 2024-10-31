@@ -3,7 +3,7 @@ import Foundation
 class Huggingface {
     private enum Constants {
         static let baseURL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions"
-        static let apiKey = "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"
+        static let apiKey = "xxxxxxx"
         static let model = "Qwen/Qwen2.5-72B-Instruct"
         static let maxTokens = 500
     }
