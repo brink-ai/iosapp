@@ -3,7 +3,7 @@ import Foundation
 class Huggingface {
     private enum Constants {
         static let baseURL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions"
-        static let apiKey = "hf_xxxxxxxxxxxx"
+        static let apiKey = "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"
         static let model = "Qwen/Qwen2.5-72B-Instruct"
         static let maxTokens = 500
     }
@@ -20,9 +20,13 @@ class Huggingface {
         let stream: Bool
     }
     
-    static func sendTranscriptionToAPI(prompt: String, completion: @escaping (String?) -> Void) {
+    // Store the API response here
+    static var apiResponse: String?
+    
+    static func sendTranscriptionToAPI(prompt: String) {
         guard let url = URL(string: Constants.baseURL) else {
-            completion(nil)
+            print("Invalid URL")
+            apiResponse = nil
             return
         }
         
@@ -46,32 +50,38 @@ class Huggingface {
         do {
             request.httpBody = try JSONEncoder().encode(body)
         } catch {
-            completion(nil)
+            print("Failed to encode request body")
+            apiResponse = nil
             return
         }
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard error == nil else {
-                completion(nil)
+                print("API request failed with error: \(error!.localizedDescription)")
+                apiResponse = nil
                 return
             }
             
             guard let httpResponse = response as? HTTPURLResponse,
                   (200...299).contains(httpResponse.statusCode),
                   let data = data else {
-                completion(nil)
+                print("Unexpected response status or no data")
+                apiResponse = nil
                 return
             }
             
             do {
                 if let jsonResponse = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let output = jsonResponse["output"] as? String {
-                    completion(output)
+                    apiResponse = output
+                    print("API Response: \(output)")
                 } else {
-                    completion(nil)
+                    print("Unexpected JSON format received")
+                    apiResponse = nil
                 }
             } catch {
-                completion(nil)
+                print("Failed to decode JSON response: \(error.localizedDescription)")
+                apiResponse = nil
             }
         }.resume()
     }

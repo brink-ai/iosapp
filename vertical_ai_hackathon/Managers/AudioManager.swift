@@ -1,129 +1,228 @@
 import AVFoundation
 import Speech
 
-class AudioManager: NSObject, ObservableObject {
-    @Published private(set) var inputLevel: CGFloat = 0
-    @Published private(set) var isRecording = false
-    @Published private(set) var transcribedText = ""
-    @Published private(set) var apiResponse = ""
+class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    private var audioEngine: AVAudioEngine?
+    private var inputNode: AVAudioInputNode?
+    private let bus: Int = 0
     
-    private let audioEngine = AVAudioEngine()
-    private let speechRecognizer = SFSpeechRecognizer(locale: .init(identifier: "en-US"))
+    private var speechRecognizer: SFSpeechRecognizer?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
     
+    @Published var inputLevel: CGFloat = 0
+    @Published var isRecording = false
+    @Published var transcribedText: String = ""
+    @Published var apiResponse: String = ""
+    
+    private var apiCheckTimer: Timer?
+    
     override init() {
         super.init()
-        configureAudioSession()
+        setupAudio()
+        requestSpeechAuthorization()
+    }
+    
+    private func setupAudio() {
+        // Initialize audio session first
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setPreferredSampleRate(44100.0)
+            try session.setPreferredIOBufferDuration(0.005)
+            try session.setActive(true)
+            
+            print("Audio Session initialized with sample rate: \(session.sampleRate)")
+            
+            // Initialize audio engine after session is set up
+            audioEngine = AVAudioEngine()
+            inputNode = audioEngine?.inputNode
+            speechRecognizer = SFSpeechRecognizer(locale: .current)
+            
+        } catch {
+            print("Failed to setup audio session: \(error.localizedDescription)")
+        }
     }
     
     func startRecording() {
-        checkPermissions { [weak self] authorized in
-            guard authorized, let self = self else { return }
-            self.setupRecording()
+        guard !isRecording,
+              let audioEngine = audioEngine,
+              let inputNode = inputNode else {
+            print("Audio engine or input node not available")
+            return
         }
-    }
-    
-    func stopRecording() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        recognitionRequest?.endAudio()
-        recognitionRequest = nil
-        recognitionTask?.cancel()
-        recognitionTask = nil
-        isRecording = false
-    }
-    
-    private func configureAudioSession() {
-        let session = AVAudioSession.sharedInstance()
+        
+        // Reset state
+        transcribedText = ""
+        apiResponse = ""
+        
         do {
-            try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("Audio session setup failed: \(error)")
-        }
-    }
-    
-    private func checkPermissions(completion: @escaping (Bool) -> Void) {
-        AVAudioApplication.shared().requestRecordPermissionWithCompletionHandler { granted in
-            guard granted else {
-                print("Microphone permission denied")
-                return completion(false)
+            // Stop any existing audio
+            if audioEngine.isRunning {
+                audioEngine.stop()
+                inputNode.removeTap(onBus: bus)
             }
             
-            SFSpeechRecognizer.requestAuthorization { status in
-                let authorized = status == .authorized
-                if !authorized {
-                    print("Speech recognition permission denied")
-                }
-                completion(authorized)
+            // Ensure audio session is properly configured
+            let audioSession = AVAudioSession.sharedInstance()
+            if !audioSession.isOtherAudioPlaying {
+                try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
             }
-        }
-    }
-    
-    private func setupRecording() {
-        stopRecording()  // Clean up any existing recording session
-        
-        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
-        recognitionRequest?.shouldReportPartialResults = true
-        
-        let inputNode = audioEngine.inputNode
-        let recordingFormat = inputNode.inputFormat(forBus: 0)
-        
-        inputNode.removeTap(onBus: 0)  // Remove any existing tap first
-        inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
-            self?.updateInputLevel(buffer)
-        }
-        
-        do {
+            
+            // Configure and start the engine
             try audioEngine.start()
+            
+            // Start speech recognition after engine is running
+            startSpeechRecognition()
+            
             isRecording = true
-            startTranscription()
+            print("Recording started successfully")
+            
         } catch {
-            print("Failed to start audio engine: \(error)")
+            print("Failed to start recording: \(error.localizedDescription)")
             stopRecording()
         }
     }
     
-    private func startTranscription() {
-        guard let request = recognitionRequest else { return }
+    func stopRecording() {
+        guard let audioEngine = audioEngine,
+              let inputNode = inputNode else { return }
         
-        recognitionTask = speechRecognizer?.recognitionTask(with: request) { [weak self] result, error in
+        // Remove tap first
+        inputNode.removeTap(onBus: bus)
+        
+        // Stop audio engine
+        if audioEngine.isRunning {
+            audioEngine.stop()
+        }
+        
+        // Clean up recognition
+        recognitionRequest?.endAudio()
+        recognitionRequest = nil
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        
+        isRecording = false
+        print("Recording stopped")
+    }
+    
+    private func startSpeechRecognition() {
+        guard let audioEngine = audioEngine,
+              let inputNode = inputNode else { return }
+        
+        // Reset any existing recognition task
+        recognitionTask?.cancel()
+        recognitionTask = nil
+        
+        // Create new recognition request
+        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        
+        guard let recognitionRequest = recognitionRequest else {
+            print("Unable to create recognition request")
+            return
+        }
+        
+        recognitionRequest.shouldReportPartialResults = true
+        
+        // Configure recognition task
+        recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
             
-            if let error = error {
-                print("Recognition error: \(error)")
-                self.stopRecording()
-                return
-            }
-            
             if let result = result {
-                self.transcribedText = result.bestTranscription.formattedString
-                
-                if result.isFinal {
-                    self.processTranscription()
+                DispatchQueue.main.async {
+                    self.transcribedText = result.bestTranscription.formattedString
+                    
+                    if result.isFinal {
+                        self.processTranscription(prompt: self.transcribedText)
+                        self.stopRecording()
+                    }
                 }
             }
             
-            if result?.isFinal == true {
+            if let error = error {
+                print("Speech recognition error: \(error)")
                 self.stopRecording()
             }
         }
+        
+        // Get the format that matches the audio session
+        let recordingFormat = inputNode.inputFormat(forBus: bus)
+        print("Recording format: \(recordingFormat)")
+        
+            inputNode.installTap(onBus: bus,
+                               bufferSize: 1024,
+                               format: recordingFormat) { [weak self] buffer, _ in
+                guard let self = self else { return }
+                
+                self.recognitionRequest?.append(buffer)
+                
+                let level = self.calculateLevel(buffer)
+                DispatchQueue.main.async {
+                    self.inputLevel = CGFloat(level)
+                }
+            }
+
     }
     
-    private func processTranscription() {
-        Huggingface.sendTranscriptionToAPI(prompt: transcribedText) { [weak self] response in
+    private func calculateLevel(_ buffer: AVAudioPCMBuffer) -> Float {
+        guard let channelData = buffer.floatChannelData?[0] else { return 0.0 }
+        let frames = buffer.frameLength
+        
+        var sum: Float = 0
+        for i in 0..<Int(frames) {
+            sum += abs(channelData[i])
+        }
+        
+        return sum / Float(frames)
+    }
+    
+    func requestSpeechAuthorization() {
+        SFSpeechRecognizer.requestAuthorization { [weak self] status in
             DispatchQueue.main.async {
-                self?.apiResponse = response ?? "No response"
+                switch status {
+                case .authorized:
+                    print("Speech recognition authorized")
+                case .denied:
+                    print("Speech recognition denied")
+                case .restricted:
+                    print("Speech recognition restricted")
+                case .notDetermined:
+                    print("Speech recognition not determined")
+                @unknown default:
+                    print("Speech recognition unknown status")
+                }
             }
         }
     }
     
-    private func updateInputLevel(_ buffer: AVAudioPCMBuffer) {
-        guard let channelData = buffer.floatChannelData?[0] else { return }
-        let frameCount = Float(buffer.frameLength)
-        let rms = sqrt(channelData.prefix(Int(frameCount)).map { $0 * $0 }.reduce(0, +) / frameCount)
-        inputLevel = CGFloat(rms) * 1000
+    private func processTranscription(prompt: String) {
+        apiCheckTimer?.invalidate()
+        
+        Huggingface.sendTranscriptionToAPI(prompt: prompt)
+        
+        apiCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] timer in
+            if let response = Huggingface.apiResponse {
+                DispatchQueue.main.async {
+                    self?.apiResponse = response
+                    self?.apiCheckTimer?.invalidate()
+                    self?.apiCheckTimer = nil
+                    Huggingface.apiResponse = nil
+                }
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+            self?.apiCheckTimer?.invalidate()
+            self?.apiCheckTimer = nil
+            if self?.apiResponse.isEmpty ?? true {
+                self?.apiResponse = "No response received from API"
+            }
+        }
+    }
+    
+    deinit {
+        stopRecording()
+        apiCheckTimer?.invalidate()
+        try? AVAudioSession.sharedInstance().setActive(false)
     }
 }
