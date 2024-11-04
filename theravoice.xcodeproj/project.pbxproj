@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		31FE4D182CD882200016967F /* theravoice-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31FE4D172CD882200016967F /* theravoice-Info.plist */; };
 		E7A4E5632CC58ED9000990A3 /* aiXplainKit in Frameworks */ = {isa = PBXBuildFile; productRef = E7A4E5622CC58ED9000990A3 /* aiXplainKit */; };
 /* End PBXBuildFile section */
 
@@ -206,7 +205,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				31FE4D182CD882200016967F /* theravoice-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

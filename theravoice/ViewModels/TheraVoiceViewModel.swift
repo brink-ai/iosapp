@@ -1,16 +1,26 @@
+//
+//  TheraVoiceViewModel.swift
+//  theravoice
+//
+//  Created by Aria Han on 11/4/24.
+//
+
 import Foundation
 import HealthKit
 
 class TheraVoiceViewModel: ObservableObject {
-    @Published var transcribedText: String = ""
-    @Published var heartRateData: [(value: Double, startDate: Date, endDate: Date)] = []
-    @Published var sleepData: [(stage: String, startDate: Date, endDate: Date)] = []
-    private let healthKitManager = HealthKitManager()
+    @Published var messages: [Message] = []                        // Stores chat messages
+    @Published var transcribedText: String = ""                    // Stores current transcription
+    @Published var heartRateData: [(value: Double, startDate: Date, endDate: Date)] = []   // Heart rate data
+    @Published var sleepData: [(stage: String, startDate: Date, endDate: Date)] = []       // Sleep data
+    
+    private let healthKitManager = HealthKitManager()              // Manages HealthKit data
     
     init() {
         loadHealthData()
     }
     
+    // Request HealthKit authorization and load health data if authorized
     func loadHealthData() {
         healthKitManager.requestAuthorization { success, error in
             if success {
@@ -22,9 +32,10 @@ class TheraVoiceViewModel: ObservableObject {
         }
     }
 
+    // Fetch heart rate data from HealthKit for the last two days
     private func fetchHeartRate() {
-        let threeDaysAgo = Calendar.current.date(byAdding: .day, value: -3, to: Date())
-        let predicate = HKQuery.predicateForSamples(withStart: threeDaysAgo, end: Date(), options: .strictStartDate)
+        let twoDaysAgo = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: twoDaysAgo, end: Date(), options: .strictStartDate)
         
         healthKitManager.fetchHeartRateData(predicate: predicate) { samples in
             DispatchQueue.main.async {
@@ -33,9 +44,10 @@ class TheraVoiceViewModel: ObservableObject {
         }
     }
 
+    // Fetch sleep data from HealthKit for the last two days
     private func fetchSleepData() {
-        let threeDaysAgo = Calendar.current.date(byAdding: .day, value: -3, to: Date())
-        let predicate = HKQuery.predicateForSamples(withStart: threeDaysAgo, end: Date(), options: .strictStartDate)
+        let twoDaysAgo = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: twoDaysAgo, end: Date(), options: .strictStartDate)
         
         healthKitManager.fetchSleepData(predicate: predicate) { samples in
             DispatchQueue.main.async {
@@ -44,7 +56,14 @@ class TheraVoiceViewModel: ObservableObject {
         }
     }
     
-    // Function to generate the combined request string for the API
+    // Store a message in the messages array
+    func storeMessage(_ message: Message) {
+        DispatchQueue.main.async {
+            self.messages.append(message)
+        }
+    }
+    
+    // Combine transcription and health data into a single string for API requests
     func getCombinedDataString(withTranscription transcription: String) -> String {
         // Format heart rate data with timestamps
         let heartRates = heartRateData.map { sample in
@@ -60,7 +79,7 @@ class TheraVoiceViewModel: ObservableObject {
             return "\(sample.stage) (from \(start) to \(end))"
         }.joined(separator: ", ")
         
-        // Create a single string with all data
+        // Combine all data into a single string
         return """
         Transcription: \(transcription)
         Heart Rate Data: \(heartRates)

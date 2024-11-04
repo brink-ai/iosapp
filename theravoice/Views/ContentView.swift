@@ -1,84 +1,79 @@
-//
-//  ContentView.swift
-//  vertical_ai_hackathon
-//
-//  Created by Aria Han on 10/31/24.
-//
-
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var viewModel = TheraVoiceViewModel() // Initialize TheraVoiceViewModel
-    @StateObject private var audioManager: AudioManager // Initialize AudioManager with viewModel
-    @Environment(\.colorScheme) var colorScheme
-    
-    init() {
-        let viewModel = TheraVoiceViewModel()
-        _viewModel = StateObject(wrappedValue: viewModel)
-        _audioManager = StateObject(wrappedValue: AudioManager(viewModel: viewModel))
-    }
+    @StateObject private var viewModel = TheraVoiceViewModel()
+    @StateObject private var audioManager: AudioManager = AudioManager(viewModel: TheraVoiceViewModel())
+    @State private var isSettingsPresented = false
 
+    init() {
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        appearance.titleTextAttributes = [.foregroundColor: UIColor.black]
+        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.black]
+        
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {
-                backgroundColor.ignoresSafeArea()
+                Color.black.ignoresSafeArea()
                 
-                VStack {
-                    CircleView(
-                        level: audioManager.inputLevel,
-                        title: audioManager.isRecording ? "Listening..." : "Tap to Start"
-                    )
-                    
-                    if !audioManager.transcribedText.isEmpty {
-                        Text("Transcribed:")
-                            .font(.headline)
-                            .padding(.top)
-                        Text(audioManager.transcribedText)
-                            .padding()
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
-                    }
-                    
-                    if !audioManager.apiResponse.isEmpty {
-                        Text("API Response:")
-                            .font(.headline)
-                            .padding(.top)
-                        Text(audioManager.apiResponse)
-                            .padding()
-                            .foregroundColor(colorScheme == .dark ? .white : .black)
-                    }
-                    
-                    Button(action: {
-                        if audioManager.isRecording {
-                            audioManager.stopRecording()
-                        } else {
-                            audioManager.startRecording()
-                        }
-                    }) {
-                        Text(audioManager.isRecording ? "Stop" : "Start")
-                            .padding()
-                            .frame(width: 100)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .padding()
-                    
-                    // Navigation link to TheraVoiceView
-                    NavigationLink(destination: TheraVoiceView(viewModel: viewModel)) {
-                        Text("Go to Biometric Data")
-                            .font(.headline)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                    }
-                    .padding(.top, 20)
+                VStack(spacing: 0) {
+                    HeaderView()
+                    MessagesScrollView(viewModel: viewModel)
+                    Spacer()
+                    RecordingControls(audioManager: audioManager)
+                        .frame(height: 240)
+                        .padding(.bottom)
+                }
+            }
+            .navigationBarTitle("TheraVoice", displayMode: .inline)
+            .navigationBarItems(trailing: settingsButton)
+            .sheet(isPresented: $isSettingsPresented) {
+                SettingsView(isTTSModeEnabled: $audioManager.isTTSModeEnabled, selectedModel: $audioManager.selectedModel)
+            }
+        }
+        .onReceive(audioManager.$transcribedText) { newText in
+            handleTranscription(newText: newText)
+        }
+        .onReceive(audioManager.$apiResponse) { response in
+            handleAPIResponse(response: response)
+        }
+    }
+    
+    private var settingsButton: some View {
+        Button("Settings") { isSettingsPresented.toggle() }
+    }
+    
+    private func handleTranscription(newText: String) {
+        if !newText.isEmpty && audioManager.isTranscriptionComplete {
+            let message = Message(text: newText, isUser: true, audioFilePath: nil)
+            viewModel.storeMessage(message)
+            
+            APIManager.shared.processTranscription(prompt: newText, selectedModel: audioManager.selectedModel) { response in
+                if let response = response {
+                    audioManager.apiResponse = response
                 }
             }
         }
     }
     
-    private var backgroundColor: Color {
-        colorScheme == .dark ? .black : .white
+    private func handleAPIResponse(response: String) {
+        if !response.isEmpty {
+            let message = Message(text: response, isUser: false, audioFilePath: nil)
+            viewModel.storeMessage(message)
+            
+            if audioManager.isTTSModeEnabled {
+                APIManager.shared.convertTextToSpeech(response: response) { audioPath in
+                    if let audioPath = audioPath {
+                        viewModel.storeMessage(Message(text: response, isUser: false, audioFilePath: audioPath))
+                    }
+                }
+            }
+        }
     }
 }
