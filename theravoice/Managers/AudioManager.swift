@@ -4,20 +4,19 @@ import Speech
 class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var audioEngine: AVAudioEngine?
     private var inputNode: AVAudioInputNode?
-    private let bus: Int = 0
-    
+    private let bus = 0
     private var speechRecognizer: SFSpeechRecognizer?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
-    
+
     @Published var inputLevel: CGFloat = 0
     @Published var isRecording = false
-    @Published var transcribedText: String = ""
-    @Published var apiResponse: String = ""
-    
+    @Published var transcribedText = ""
+    @Published var apiResponse = ""
+
     private var apiCheckTimer: Timer?
     private var shouldStopRecording = false
-    
+
     override init() {
         super.init()
         setupAudio()
@@ -44,9 +43,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     }
     
     func startRecording() {
-        guard !isRecording,
-              let audioEngine = audioEngine,
-              let inputNode = inputNode else {
+        guard !isRecording, let audioEngine = audioEngine, let inputNode = inputNode else {
             print("Audio engine or input node not available")
             return
         }
@@ -78,42 +75,27 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     
     func stopRecording() {
         shouldStopRecording = true
-        
-        // Only stop immediately if we're not in the middle of processing
-        if recognitionTask?.state != .running {
-            performStopRecording()
-        } else {
-            // If we're still running, let the recognition task finish
-            recognitionRequest?.endAudio()
-        }
+        recognitionRequest?.endAudio()
+        performStopRecording()
     }
-    
+
     private func performStopRecording() {
-        guard let audioEngine = audioEngine,
-              let inputNode = inputNode else { return }
+        guard let audioEngine = audioEngine, let inputNode = inputNode else { return }
         
         inputNode.removeTap(onBus: bus)
+        audioEngine.stop()
         
-        if audioEngine.isRunning {
-            audioEngine.stop()
-        }
-        
-        recognitionRequest?.endAudio()
+        recognitionTask?.finish()  // Finish recognition to process any remaining transcription
         recognitionRequest = nil
-        recognitionTask?.cancel()
         recognitionTask = nil
-        
         isRecording = false
         print("Recording stopped")
     }
-    
+
     private func startSpeechRecognition() {
-        guard let audioEngine = audioEngine,
-              let inputNode = inputNode else { return }
+        guard let inputNode = inputNode else { return }
         
         recognitionTask?.cancel()
-        recognitionTask = nil
-        
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         
         guard let recognitionRequest = recognitionRequest else {
@@ -127,14 +109,10 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         recognitionTask = speechRecognizer?.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             guard let self = self else { return }
             
-            var isFinal = false
-            
             if let result = result {
-                isFinal = result.isFinal
                 DispatchQueue.main.async {
                     self.transcribedText = result.bestTranscription.formattedString
-                    
-                    if isFinal {
+                    if result.isFinal {
                         print("Final transcription: \(self.transcribedText)")
                         self.processTranscription(prompt: self.transcribedText)
                         if self.shouldStopRecording {
@@ -144,22 +122,25 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 }
             }
             
-            if let error = error {
-                print("Speech recognition error: \(error.localizedDescription)")
-                if self.shouldStopRecording {
-                    self.performStopRecording()
+            if let error = error as NSError? {
+                // Check if the error is specific to the local speech recognition service
+                if error.domain == "kAFAssistantErrorDomain" && error.code == 1101 {
+                    print("Non-critical error with local speech recognition service: \(error.localizedDescription)")
+                } else {
+                    print("Speech recognition error: \(error.localizedDescription)")
+                    if self.shouldStopRecording {
+                        self.performStopRecording()
+                    }
                 }
             }
         }
+
         
         let recordingFormat = inputNode.inputFormat(forBus: bus)
         print("Recording format: \(recordingFormat)")
         
-        inputNode.installTap(onBus: bus,
-                           bufferSize: 1024,
-                           format: recordingFormat) { [weak self] buffer, _ in
+        inputNode.installTap(onBus: bus, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
             self?.recognitionRequest?.append(buffer)
-            
             if let strongSelf = self {
                 let level = strongSelf.calculateLevel(buffer)
                 DispatchQueue.main.async {
@@ -172,13 +153,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private func calculateLevel(_ buffer: AVAudioPCMBuffer) -> Float {
         guard let channelData = buffer.floatChannelData?[0] else { return 0.0 }
         let frames = buffer.frameLength
-        
-        var sum: Float = 0
-        for i in 0..<Int(frames) {
-            sum += abs(channelData[i])
-        }
-        
-        return sum / Float(frames)
+        return (0..<Int(frames)).reduce(0) { $0 + abs(channelData[$1]) } / Float(frames)
     }
     
     func requestSpeechAuthorization() {
@@ -206,33 +181,20 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         print("Processing transcription: \(prompt)")
         apiCheckTimer?.invalidate()
         
-        // Send the transcription to the API
-        Huggingface.sendTranscriptionToAPI(prompt: prompt)
-        
-        // Start polling for the response
-        apiCheckTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] timer in
-            if let response = Huggingface.apiResponse {
-                DispatchQueue.main.async {
-                    if !response.isEmpty {
-                        self?.apiResponse = response
-                        print("Received API response: \(response)")
-                    } else {
-                        self?.apiResponse = "Empty response received from API"
-                    }
-                    self?.apiCheckTimer?.invalidate()
-                    self?.apiCheckTimer = nil
-                    Huggingface.apiResponse = nil
+        Huggingface.sendTranscriptionToAPI(prompt: prompt) { [weak self] response in
+            DispatchQueue.main.async {
+                if let response = response, !response.isEmpty {
+                    self?.apiResponse = response
+                    print("Received API response: \(response)")
+                } else {
+                    self?.apiResponse = "Empty response received from API"
                 }
             }
         }
         
-        // Set a timeout for the API response
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10) { [weak self] in
+        // Set a fallback timeout in case no response arrives within 25 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 25) { [weak self] in
             guard let self = self else { return }
-            
-            self.apiCheckTimer?.invalidate()
-            self.apiCheckTimer = nil
-            
             if self.apiResponse.isEmpty {
                 self.apiResponse = "No response received from API"
                 print("API response timeout")

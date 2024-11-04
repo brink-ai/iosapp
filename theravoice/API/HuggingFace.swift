@@ -3,7 +3,7 @@ import Foundation
 class Huggingface {
     private enum Constants {
         static let baseURL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions"
-        static let apiKey = "xxxxxxx"
+        static let apiKey = "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"
         static let model = "Qwen/Qwen2.5-72B-Instruct"
         static let maxTokens = 500
     }
@@ -20,18 +20,27 @@ class Huggingface {
         let stream: Bool
     }
     
+    private struct ChatChoice: Codable {
+        let message: ChatMessageContent
+    }
+    
+    private struct ChatMessageContent: Codable {
+        let role: String
+        let content: String
+    }
+    
     private struct ResponseData: Codable {
-        let output: String?
+        let choices: [ChatChoice]?
         let error: String?
     }
     
     // Store the API response here
     static var apiResponse: String?
     
-    static func sendTranscriptionToAPI(prompt: String) {
+    static func sendTranscriptionToAPI(prompt: String, completion: @escaping (String?) -> Void) {
         guard let url = URL(string: Constants.baseURL) else {
             print("Invalid URL")
-            apiResponse = nil
+            completion(nil)
             return
         }
         
@@ -44,7 +53,7 @@ class Huggingface {
             model: Constants.model,
             messages: messages,
             max_tokens: Constants.maxTokens,
-            stream: false  // Changed to false for simpler handling
+            stream: false
         )
         
         var request = URLRequest(url: url)
@@ -58,13 +67,13 @@ class Huggingface {
             URLSession.shared.dataTask(with: request) { data, response, error in
                 if let error = error {
                     print("API request failed: \(error.localizedDescription)")
-                    apiResponse = "Error: \(error.localizedDescription)"
+                    completion("Error: \(error.localizedDescription)")
                     return
                 }
                 
                 guard let data = data else {
                     print("No data received")
-                    apiResponse = "Error: No data received"
+                    completion("Error: No data received")
                     return
                 }
                 
@@ -75,17 +84,18 @@ class Huggingface {
                     
                     let decoder = JSONDecoder()
                     let response = try decoder.decode(ResponseData.self, from: data)
-                    apiResponse = response.output ?? response.error ?? "No response content"
+                    let content = response.choices?.first?.message.content
+                    completion(content ?? response.error ?? "No response content")
                     
                 } catch {
-                    print("Failed to decode response: \(error)")
-                    apiResponse = "Error decoding response: \(error.localizedDescription)"
+                    print("Failed to decode response: \(error.localizedDescription)")
+                    completion("Error decoding response: \(error.localizedDescription)")
                 }
             }.resume()
             
         } catch {
             print("Failed to encode request: \(error)")
-            apiResponse = "Error encoding request: \(error.localizedDescription)"
+            completion("Error encoding request: \(error.localizedDescription)")
         }
     }
 }

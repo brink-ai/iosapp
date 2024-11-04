@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		31FE4D182CD882200016967F /* theravoice-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 31FE4D172CD882200016967F /* theravoice-Info.plist */; };
 		E7A4E5632CC58ED9000990A3 /* aiXplainKit in Frameworks */ = {isa = PBXBuildFile; productRef = E7A4E5622CC58ED9000990A3 /* aiXplainKit */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		31FE4D172CD882200016967F /* theravoice-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "theravoice-Info.plist"; sourceTree = "<group>"; };
 		E7A4E52E2CC58BF1000990A3 /* theravoice.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = theravoice.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E7A4E5402CC58BF3000990A3 /* theravoiceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = theravoiceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E7A4E54A2CC58BF3000990A3 /* theravoiceUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = theravoiceUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -70,6 +72,7 @@
 		E7A4E5252CC58BF1000990A3 = {
 			isa = PBXGroup;
 			children = (
+				31FE4D172CD882200016967F /* theravoice-Info.plist */,
 				E7A4E5302CC58BF1000990A3 /* theravoice */,
 				E7A4E52F2CC58BF1000990A3 /* Products */,
 			);
@@ -203,6 +206,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31FE4D182CD882200016967F /* theravoice-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -384,10 +388,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = theravoice/theravoice.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"theravoice/Preview Content\"";
-				DEVELOPMENT_TEAM = L7UDTQ6F5W;
+				DEVELOPMENT_TEAM = 8TBWTVY269;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "theravoice-Info.plist";
@@ -416,10 +421,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = theravoice/theravoice.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"theravoice/Preview Content\"";
-				DEVELOPMENT_TEAM = L7UDTQ6F5W;
+				DEVELOPMENT_TEAM = 8TBWTVY269;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "theravoice-Info.plist";
