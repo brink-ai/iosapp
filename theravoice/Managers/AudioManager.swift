@@ -47,11 +47,9 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             audioEngine = AVAudioEngine()
             inputNode = audioEngine?.inputNode
             
-            // Configure speech recognizer with specific locale and options
             speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
             speechRecognizer?.defaultTaskHint = .dictation
             
-            // Add queue for speech recognition
             recognitionQueue = DispatchQueue(label: "com.app.speechrecognition")
             
         } catch {
@@ -99,13 +97,12 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private func performStopRecording() {
         guard let audioEngine = audioEngine, let inputNode = inputNode else { return }
         
-        // Ensure we process any final transcription
         if !transcriptionBuffer.isEmpty && !isProcessingAPI {
             DispatchQueue.main.async {
                 self.transcribedText = self.transcriptionBuffer
                 self.isTranscriptionComplete = true
                 if !self.transcribedText.isEmpty {
-                    self.processTranscription(prompt: self.transcribedText)
+                    Task { await self.processTranscription(prompt: self.transcribedText) }
                 }
             }
         }
@@ -125,13 +122,11 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private func startSpeechRecognition() {
         guard let inputNode = inputNode else { return }
         
-        // Cancel any existing task
         recognitionTask?.cancel()
         recognitionRequest?.endAudio()
         recognitionRequest = nil
         recognitionTask = nil
         
-        // Create new recognition request
         recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
         
         guard let recognitionRequest = recognitionRequest else {
@@ -139,7 +134,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             return
         }
         
-        // Configure request
         recognitionRequest.shouldReportPartialResults = true
         recognitionRequest.taskHint = .dictation
         recognitionRequest.contextualStrings = ["hello", "hi", "hey"]
@@ -148,7 +142,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             recognitionRequest.requiresOnDeviceRecognition = false
         }
         
-        // Create recognition task with error handling and retry logic
         var retryCount = 0
         let maxRetries = 3
         
@@ -157,11 +150,9 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
                 guard let self = self else { return }
                 
                 if let error = error as NSError? {
-                    // Handle specific error cases
                     switch error.domain {
                     case "kAFAssistantErrorDomain":
                         if error.code == 1101 {
-                            // Local speech recognition error - retry
                             if retryCount < maxRetries {
                                 retryCount += 1
                                 print("Retrying speech recognition... Attempt \(retryCount)")
@@ -173,7 +164,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
                                 self.handleSpeechError()
                             }
                         } else if error.code == 1110 {
-                            // No speech detected - normal case
                             print("No speech detected")
                             if !self.transcriptionBuffer.isEmpty {
                                 self.stopRecording()
@@ -209,7 +199,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         
         createRecognitionTask()
         
-        // Configure audio session
         let recordingFormat = inputNode.outputFormat(forBus: 0)
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
             self?.recognitionRequest?.append(buffer)
@@ -248,13 +237,13 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         }
     }
     
-    private func processTranscription(prompt: String) {
+    private func processTranscription(prompt: String) async {
         guard !prompt.isEmpty && !isProcessingAPI else { return }
         
         isProcessingAPI = true
         apiCheckTimer?.invalidate()
         
-        let combinedRequest = viewModel.getCombinedDataString(withTranscription: prompt)
+        let combinedRequest = await viewModel.getCombinedDataString(withTranscription: prompt)
         
         if selectedModel == "Groq" {
             Groq.sendTranscriptionToAPI(prompt: combinedRequest) { [weak self] response in
@@ -272,7 +261,6 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             if let response = response, !response.isEmpty {
                 self.apiResponse = response
                 
-                // If TTS is enabled, automatically play the response
                 if self.isTTSModeEnabled {
                     self.convertAndPlayResponse(response)
                 }

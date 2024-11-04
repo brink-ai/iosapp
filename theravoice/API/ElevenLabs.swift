@@ -8,13 +8,18 @@
 import Foundation
 import AVFoundation
 
-class ElevenLabs {
+class ElevenLabs: NSObject, AVAudioPlayerDelegate {
+    static let shared = ElevenLabs()
     
     static let apiKey = "sk_ad7131ca2928845ff071099589901bf82822e1180e7e6b98"
     static let voiceID = "4N7UCmYq9AN2MVfPiySs"
     static let baseURL = "https://api.elevenlabs.io/v1/text-to-speech/\(voiceID)/stream"
     
     static var audioPlayer: AVAudioPlayer?
+    
+    override private init() {
+        super.init()
+    }
 
     static func textToSpeech(text: String, completion: @escaping (URL?) -> Void) {
         guard let url = URL(string: baseURL) else {
@@ -27,6 +32,7 @@ class ElevenLabs {
         request.httpMethod = "POST"
         request.addValue(apiKey, forHTTPHeaderField: "xi-api-key")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30 // Add timeout of 30 seconds
 
         let parameters: [String: Any] = [
             "text": text,
@@ -46,47 +52,69 @@ class ElevenLabs {
         }
         request.httpBody = httpBody
 
-        // Generate a unique file path to save the audio
         let uniqueFileName = "\(UUID().uuidString).mp3"
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(uniqueFileName)
         
-        // Start streaming the audio data
+        print("ElevenLabs API Request - Text length: \(text.count) characters")
+        
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
-                print("Error: \(error.localizedDescription)")
+                print("Network Error: \(error.localizedDescription)")
                 completion(nil)
                 return
             }
             
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                print("Failed to receive valid response")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("Invalid response type")
                 completion(nil)
                 return
             }
             
-            guard let data = data else {
+            print("ElevenLabs Response Status: \(httpResponse.statusCode)")
+            
+            guard httpResponse.statusCode == 200 else {
+                print("Server Error: Status \(httpResponse.statusCode)")
+                if let data = data, let errorString = String(data: data, encoding: .utf8) {
+                    print("Error Response: \(errorString)")
+                }
+                completion(nil)
+                return
+            }
+            
+            guard let data = data, !data.isEmpty else {
                 print("No data received")
                 completion(nil)
                 return
             }
             
-            // Write audio data to the file
             do {
                 try data.write(to: tempURL)
-                print("Audio data written to file at \(tempURL)")
-                completion(tempURL)
+                
+                // Verify the file exists and has content
+                let fileSize = try FileManager.default.attributesOfItem(atPath: tempURL.path)[.size] as? UInt64 ?? 0
+                print("Audio file size: \(fileSize) bytes")
+                
+                if fileSize > 0 {
+                    print("Audio data written successfully to file at \(tempURL)")
+                    completion(tempURL)
+                } else {
+                    print("Generated audio file is empty")
+                    try? FileManager.default.removeItem(at: tempURL)
+                    completion(nil)
+                }
             } catch {
-                print("Error writing audio data to file: \(error.localizedDescription)")
+                print("File Write Error: \(error.localizedDescription)")
                 completion(nil)
             }
         }
         task.resume()
     }
 
-    // Function to play audio from a URL
     static func playAudio(from url: URL) {
         do {
+            audioPlayer?.stop()
             audioPlayer = try AVAudioPlayer(contentsOf: url)
+            audioPlayer?.delegate = shared
             audioPlayer?.play()
             print("Playing audio from \(url)")
         } catch {

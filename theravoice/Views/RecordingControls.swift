@@ -11,20 +11,19 @@ struct RecordingControls: View {
     @ObservedObject var audioManager: AudioManager
     
     var body: some View {
-        ZStack {
+        Button(action: {
             if audioManager.isRecording {
-                CircleView(level: audioManager.inputLevel * 5, title: "Listening...")
-                    .onTapGesture {
-                        audioManager.stopRecording()
-                    }
+                audioManager.stopRecording()
             } else {
-                Button(action: audioManager.startRecording) {
-                    Image(systemName: "mic.circle.fill")
-                        .resizable()
-                        .frame(width: 60, height: 60)
-                        .foregroundColor(.white)
-                }
+                ElevenLabs.audioPlayer?.stop()
+                audioManager.startRecording()
             }
+        }) {
+            Image(systemName: audioManager.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                .resizable()
+                .frame(width: 64, height: 64)
+                .foregroundColor(.white)
+                
         }
     }
 }

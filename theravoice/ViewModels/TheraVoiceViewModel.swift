@@ -1,89 +1,128 @@
-//
-//  TheraVoiceViewModel.swift
-//  theravoice
-//
-//  Created by Aria Han on 11/4/24.
-//
-
 import Foundation
 import HealthKit
 
 class TheraVoiceViewModel: ObservableObject {
-    @Published var messages: [Message] = []                        // Stores chat messages
-    @Published var transcribedText: String = ""                    // Stores current transcription
-    @Published var heartRateData: [(value: Double, startDate: Date, endDate: Date)] = []   // Heart rate data
-    @Published var sleepData: [(stage: String, startDate: Date, endDate: Date)] = []       // Sleep data
+    @Published var messages: [Message] = []
+    @Published var currentTranscription: String = ""
+    @Published var heartRateData: [(value: Double, startDate: Date, endDate: Date)] = []
+    @Published var sleepData: [(stage: String, startDate: Date, endDate: Date)] = []
     
-    private let healthKitManager = HealthKitManager()              // Manages HealthKit data
+    private let healthKitManager = HealthKitManager()
+    private let groqMessages = GroqMessages.shared
+    private let conversationWindowSize = 5
+    private let healthDataFrequency = 5
     
     init() {
         loadHealthData()
     }
     
-    // Request HealthKit authorization and load health data if authorized
     func loadHealthData() {
-        healthKitManager.requestAuthorization { success, error in
+        healthKitManager.requestAuthorization { [weak self] success, error in
+            guard let self = self else { return }
+            
             if success {
-                self.fetchHeartRate()
-                self.fetchSleepData()
+                self.fetchHealthData()
             } else if let error = error {
                 print("HealthKit Authorization Error: \(error.localizedDescription)")
             }
         }
     }
-
-    // Fetch heart rate data from HealthKit for the last two days
-    private func fetchHeartRate() {
-        let twoDaysAgo = Calendar.current.date(byAdding: .day, value: -2, to: Date())
+    
+    private func fetchHealthData() {
+        let twoDaysAgo = Calendar.current.date(byAdding: .day, value: -2, to: Date())!
         let predicate = HKQuery.predicateForSamples(withStart: twoDaysAgo, end: Date(), options: .strictStartDate)
         
-        healthKitManager.fetchHeartRateData(predicate: predicate) { samples in
+        healthKitManager.fetchHeartRateData(predicate: predicate) { [weak self] samples in
             DispatchQueue.main.async {
-                self.heartRateData = samples ?? []
+                self?.heartRateData = samples ?? []
             }
         }
-    }
-
-    // Fetch sleep data from HealthKit for the last two days
-    private func fetchSleepData() {
-        let twoDaysAgo = Calendar.current.date(byAdding: .day, value: -2, to: Date())
-        let predicate = HKQuery.predicateForSamples(withStart: twoDaysAgo, end: Date(), options: .strictStartDate)
         
-        healthKitManager.fetchSleepData(predicate: predicate) { samples in
+        healthKitManager.fetchSleepData(predicate: predicate) { [weak self] samples in
             DispatchQueue.main.async {
-                self.sleepData = samples ?? []
+                self?.sleepData = samples ?? []
             }
         }
     }
     
-    // Store a message in the messages array
     func storeMessage(_ message: Message) {
         DispatchQueue.main.async {
-            self.messages.append(message)
+            if !self.messages.contains(where: { $0.text == message.text && $0.isUser == message.isUser }) {
+                self.messages.append(message)
+                
+                // Refresh health data every 5 messages
+                if self.messages.count % self.healthDataFrequency == 0 {
+                    self.fetchHealthData()
+                }
+            }
         }
     }
     
-    // Combine transcription and health data into a single string for API requests
-    func getCombinedDataString(withTranscription transcription: String) -> String {
-        // Format heart rate data with timestamps
-        let heartRates = heartRateData.map { sample in
-            let start = DateFormatter.localizedString(from: sample.startDate, dateStyle: .short, timeStyle: .short)
-            let end = DateFormatter.localizedString(from: sample.endDate, dateStyle: .short, timeStyle: .short)
-            return "\(sample.value) BPM (from \(start) to \(end))"
-        }.joined(separator: ", ")
+    func setCurrentTranscription(_ text: String) {
+        DispatchQueue.main.async {
+            self.currentTranscription = text
+        }
+    }
+    
+    func updateMessageAudioPath(at index: Int, with path: String) {
+        guard index < messages.count else { return }
+        DispatchQueue.main.async {
+            var message = self.messages[index]
+            message.audioFilePath = path
+            self.messages[index] = message
+        }
+    }
+    
+    private func formatDateTime(_ date: Date) -> String {
+        return DateFormatter.localizedString(from: date, dateStyle: .short, timeStyle: .short)
+    }
+    
+    private func getRecentMessagesSummary() async -> String {
+        let recentMessages = messages.suffix(conversationWindowSize)
+        let messagesText = recentMessages.map { $0.text }.joined(separator: " ")
+        let summaryRequest = "Summarize this in 20 words: \(messagesText)"
         
-        // Format sleep data with stages and timestamps
-        let sleepStatuses = sleepData.map { sample in
-            let start = DateFormatter.localizedString(from: sample.startDate, dateStyle: .short, timeStyle: .short)
-            let end = DateFormatter.localizedString(from: sample.endDate, dateStyle: .short, timeStyle: .short)
-            return "\(sample.stage) (from \(start) to \(end))"
-        }.joined(separator: ", ")
+        do {
+            return try await groqMessages.fetchSummary(prompt: summaryRequest)
+        } catch {
+            print("Error generating summary: \(error.localizedDescription)")
+            return "Summary unavailable."
+        }
+    }
+    
+    func getCombinedDataString(withTranscription transcription: String) async -> String {
+        let recentConversationSummary = await getRecentMessagesSummary()
         
-        // Combine all data into a single string
-        return """
-        Transcription: \(transcription)
-        Heart Rate Data: \(heartRates)
-        Sleep Data: \(sleepStatuses)
+        // Only include health data every 5 messages
+        var healthDataSection = ""
+        if messages.count % healthDataFrequency == 0 {
+            let heartRates = heartRateData.map { sample in
+                "\(Int(sample.value)) BPM (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
+            }.joined(separator: ", ")
+            
+            let sleepStatuses = sleepData.map { sample in
+                "\(sample.stage) (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
+            }.joined(separator: ", ")
+            
+            healthDataSection = """
+            
+            Health Data:
+            Heart Rate: \(heartRates)
+            Sleep: \(sleepStatuses)
+            """
+        }
+        
+        let combinedMessage = """
+        Message: \(transcription)
+        
+        Recent Conversation Summary:
+        \(recentConversationSummary)\(healthDataSection)
         """
+        
+        print("\n=== Combined Message for API ===")
+        print(combinedMessage)
+        print("===============================\n")
+        
+        return combinedMessage
     }
 }

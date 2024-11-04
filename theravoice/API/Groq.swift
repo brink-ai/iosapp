@@ -8,7 +8,7 @@
 import Foundation
 
 class Groq {
-    private enum Constants {
+    enum Constants {
         static let baseURL = "https://api.groq.com/openai/v1/chat/completions"
         static let apiKey = "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"
         static let model = "llama-3.2-11b-text-preview"

@@ -14,13 +14,16 @@ struct TextBubbleView: View {
 
     var body: some View {
         VStack(alignment: isUser ? .trailing : .leading) {
+            // Display message text in a bubble
             Text(text)
                 .padding()
-                .foregroundColor(isUser ? .black : .white)
-                .background(isUser ? Color.white : Color.white.opacity(0.2))
+                .foregroundColor(isUser ? .white : .white) // Changed AI text to white for visibility
+                .background(isUser ? Color.blue : Color.gray.opacity(0.5)) // Made AI bubble more visible
                 .cornerRadius(10)
                 .frame(maxWidth: 250, alignment: isUser ? .trailing : .leading)
-            
+                .padding(isUser ? .leading : .trailing, 50)
+
+            // Display play button if there's an audio response for AI messages
             if let audioPath = audioFilePath, !isUser {
                 Button(action: {
                     if let url = URL(string: audioPath) {
@@ -29,13 +32,16 @@ struct TextBubbleView: View {
                 }) {
                     HStack {
                         Image(systemName: "play.circle.fill")
-                            .foregroundColor(.white)
+                            .foregroundColor(.white) // Changed to white for visibility
                         Text("Play Response")
-                            .foregroundColor(.white)
+                            .foregroundColor(.white) // Changed to white for visibility
                     }
                 }
                 .padding(.top, 5)
+                .frame(maxWidth: 250, alignment: .leading)
             }
         }
+        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
+        .padding(isUser ? .trailing : .leading, 10)
     }
 }
