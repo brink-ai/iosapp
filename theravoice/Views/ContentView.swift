@@ -8,9 +8,16 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var audioManager = AudioManager()
+    @StateObject private var viewModel = TheraVoiceViewModel() // Initialize TheraVoiceViewModel
+    @StateObject private var audioManager: AudioManager // Initialize AudioManager with viewModel
     @Environment(\.colorScheme) var colorScheme
     
+    init() {
+        let viewModel = TheraVoiceViewModel()
+        _viewModel = StateObject(wrappedValue: viewModel)
+        _audioManager = StateObject(wrappedValue: AudioManager(viewModel: viewModel))
+    }
+
     var body: some View {
         ZStack {
             backgroundColor.ignoresSafeArea()

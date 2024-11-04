@@ -8,6 +8,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var speechRecognizer: SFSpeechRecognizer?
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
+    private var viewModel: TheraVoiceViewModel // Reference to the ViewModel
 
     @Published var inputLevel: CGFloat = 0
     @Published var isRecording = false
@@ -17,7 +18,8 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
     private var apiCheckTimer: Timer?
     private var shouldStopRecording = false
 
-    override init() {
+    init(viewModel: TheraVoiceViewModel) { // Initialize with the ViewModel
+        self.viewModel = viewModel
         super.init()
         setupAudio()
         requestSpeechAuthorization()
@@ -181,7 +183,11 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
         print("Processing transcription: \(prompt)")
         apiCheckTimer?.invalidate()
         
-        Huggingface.sendTranscriptionToAPI(prompt: prompt) { [weak self] response in
+        // Combine transcription and health data from the last 7 days
+        let combinedRequest = viewModel.getCombinedDataString(withTranscription: prompt)
+        
+        // Send the combined string to the API
+        Huggingface.sendTranscriptionToAPI(prompt: combinedRequest) { [weak self] response in
             DispatchQueue.main.async {
                 if let response = response, !response.isEmpty {
                     self?.apiResponse = response
