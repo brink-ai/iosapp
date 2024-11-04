@@ -19,48 +19,61 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack {
-            backgroundColor.ignoresSafeArea()
-            
-            VStack {
-                CircleView(
-                    level: audioManager.inputLevel,
-                    title: audioManager.isRecording ? "Listening..." : "Tap to Start"
-                )
+        NavigationView {
+            ZStack {
+                backgroundColor.ignoresSafeArea()
                 
-                if !audioManager.transcribedText.isEmpty {
-                    Text("Transcribed:")
-                        .font(.headline)
-                        .padding(.top)
-                    Text(audioManager.transcribedText)
-                        .padding()
-                        .foregroundColor(colorScheme == .dark ? .white : .black)
-                }
-                
-                if !audioManager.apiResponse.isEmpty {
-                    Text("API Response:")
-                        .font(.headline)
-                        .padding(.top)
-                    Text(audioManager.apiResponse)
-                        .padding()
-                        .foregroundColor(colorScheme == .dark ? .white : .black)
-                }
-                
-                Button(action: {
-                    if audioManager.isRecording {
-                        audioManager.stopRecording()
-                    } else {
-                        audioManager.startRecording()
+                VStack {
+                    CircleView(
+                        level: audioManager.inputLevel,
+                        title: audioManager.isRecording ? "Listening..." : "Tap to Start"
+                    )
+                    
+                    if !audioManager.transcribedText.isEmpty {
+                        Text("Transcribed:")
+                            .font(.headline)
+                            .padding(.top)
+                        Text(audioManager.transcribedText)
+                            .padding()
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                     }
-                }) {
-                    Text(audioManager.isRecording ? "Stop" : "Start")
-                        .padding()
-                        .frame(width: 100)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    
+                    if !audioManager.apiResponse.isEmpty {
+                        Text("API Response:")
+                            .font(.headline)
+                            .padding(.top)
+                        Text(audioManager.apiResponse)
+                            .padding()
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
+                    }
+                    
+                    Button(action: {
+                        if audioManager.isRecording {
+                            audioManager.stopRecording()
+                        } else {
+                            audioManager.startRecording()
+                        }
+                    }) {
+                        Text(audioManager.isRecording ? "Stop" : "Start")
+                            .padding()
+                            .frame(width: 100)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding()
+                    
+                    // Navigation link to TheraVoiceView
+                    NavigationLink(destination: TheraVoiceView(viewModel: viewModel)) {
+                        Text("Go to Biometric Data")
+                            .font(.headline)
+                            .padding()
+                            .background(Color.green)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding(.top, 20)
                 }
-                .padding()
             }
         }
     }

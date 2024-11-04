@@ -19,7 +19,6 @@ class HealthKitManager {
         let readTypes: Set<HKObjectType> = [
             HKObjectType.quantityType(forIdentifier: .heartRate)!,
             HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!
-            // Add any other health data types you want to access
         ]
 
         healthStore.requestAuthorization(toShare: nil, read: readTypes) { success, error in
@@ -27,7 +26,7 @@ class HealthKitManager {
         }
     }
 
-    func fetchHeartRateData(predicate: NSPredicate, completion: @escaping ([HKQuantitySample]?) -> Void) {
+    func fetchHeartRateData(predicate: NSPredicate, completion: @escaping ([(value: Double, startDate: Date, endDate: Date)]?) -> Void) {
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
             completion(nil)
             return
@@ -38,14 +37,21 @@ class HealthKitManager {
             if let error = error {
                 print("Error fetching heart rate: \(error.localizedDescription)")
                 completion(nil)
-            } else {
-                completion(results as? [HKQuantitySample])
+                return
             }
+            
+            let heartRateSamples = results?.compactMap { sample -> (value: Double, startDate: Date, endDate: Date)? in
+                guard let quantitySample = sample as? HKQuantitySample else { return nil }
+                let heartRate = quantitySample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+                return (value: heartRate, startDate: quantitySample.startDate, endDate: quantitySample.endDate)
+            }
+            
+            completion(heartRateSamples)
         }
         healthStore.execute(query)
     }
 
-    func fetchSleepData(predicate: NSPredicate, completion: @escaping ([HKCategorySample]?) -> Void) {
+    func fetchSleepData(predicate: NSPredicate, completion: @escaping ([(stage: String, startDate: Date, endDate: Date)]?) -> Void) {
         guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
             completion(nil)
             return
@@ -56,9 +62,33 @@ class HealthKitManager {
             if let error = error {
                 print("Error fetching sleep data: \(error.localizedDescription)")
                 completion(nil)
-            } else {
-                completion(results as? [HKCategorySample])
+                return
             }
+            
+            let sleepStages = results?.compactMap { sample -> (stage: String, startDate: Date, endDate: Date)? in
+                guard let categorySample = sample as? HKCategorySample else { return nil }
+                
+                // Translate sleep category values to readable stages
+                let stage: String
+                switch categorySample.value {
+                case HKCategoryValueSleepAnalysis.inBed.rawValue:
+                    stage = "In Bed"
+                case HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue:
+                    stage = "Asleep"
+                case HKCategoryValueSleepAnalysis.asleepCore.rawValue:
+                    stage = "Core Sleep"
+                case HKCategoryValueSleepAnalysis.asleepDeep.rawValue:
+                    stage = "Deep Sleep"
+                case HKCategoryValueSleepAnalysis.asleepREM.rawValue:
+                    stage = "REM Sleep"
+                default:
+                    stage = "Awake"
+                }
+                
+                return (stage: stage, startDate: categorySample.startDate, endDate: categorySample.endDate)
+            }
+            
+            completion(sleepStages)
         }
         healthStore.execute(query)
     }

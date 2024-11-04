@@ -191,6 +191,7 @@ class AudioManager: NSObject, ObservableObject, AVAudioPlayerDelegate {
             DispatchQueue.main.async {
                 if let response = response, !response.isEmpty {
                     self?.apiResponse = response
+                    print("Sent request to API: \(combinedRequest)")
                     print("Received API response: \(response)")
                 } else {
                     self?.apiResponse = "Empty response received from API"

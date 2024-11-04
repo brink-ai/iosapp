@@ -45,10 +45,10 @@ class Huggingface {
         }
         
         let messages = [
-            ChatMessage(role: "system", content: "You are Qwen, created by Alibaba Cloud. You are a helpful assistant."),
+            ChatMessage(role: "system", content: "You are TheraVoice, an empathetic and supportive AI created to help users with their mental health and emotional well-being. Respond with kindness, understanding, and gentle guidance, offering thoughtful and compassionate responses to support the user’s needs."),
             ChatMessage(role: "user", content: prompt)
         ]
-        
+
         let body = RequestBody(
             model: Constants.model,
             messages: messages,
