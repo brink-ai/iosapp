@@ -1,0 +1,8 @@
+//
+//  Environment.xcconfig
+//  theravoice
+//
+//  Created by Aria Han on 11/4/24.
+//
+
+GROQ_API_KEY = "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"
