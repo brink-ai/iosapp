@@ -1,71 +1,60 @@
 from flask import Flask, request, jsonify
 import os
+import pinecone
+from uuid import uuid4
+from dotenv import load_dotenv
+# Import the Pinecone library
+from pinecone.grpc import PineconeGRPC as Pinecone
+from pinecone import ServerlessSpec
 
+# Get the OpenAI API key and Pinecone API key from the environment variables
+load_dotenv()
+openai_api_key = os.getenv("OPENAI_API_KEY")
+pinecone_api_key = os.getenv("PINECONE_API_KEY")
+if not openai_api_key or not pinecone_api_key:
+    print("Please set the OPENAI_API_KEY and PINECONE_API_KEY environment variables.")
+# Initialize a Pinecone client with your API key
+pc = Pinecone(api_key=pinecone_api_key)
+index = pc.Index("embeddings")
 
-# Set the API key as an environment variable
-os.environ["TEAM_API_KEY"] = "4bf088eec18762baa35fffd45dec7901bb4d19521e6575cc36f0aac26eed5a09"
-import requests
-from playsound import playsound
-from pydub import AudioSegment
-from pydub.playback import play
-import io
-from audioprocessing import convert_text_to_audio, convert_with_synthesis
-
-
-from aixplain.factories import ModelFactory, AgentFactory
-
+# Initialize Flask app
 app = Flask(__name__)
 
-def run_therapist_agent(user_query, audio=False, session_id=None):
-    # Retrieve the agent using the ID
-    agent = AgentFactory.get("67156f5cc784692b8d4c54a8")
+# # Function to generate an embedding for a given text using Pinecone's embedding model
+# def get_embedding(text):
+#     # Convert the text into numerical vectors that Pinecone can index
+#     response = pc.inference.embed(
+#         model="multilingual-e5-large",  # Replace with your preferred model if different
+#         inputs=[text],
+#         parameters={"input_type": "passage", "truncate": "END"}
+#     )
+#     return response.data[0]['values']  # Returns the embedding vector
 
-    # Format the user query into the prompt
-    prompt = f"You are a caring therapist. Based on {user_query}, give a supportive, unique response that acknowledges the user’s feelings and offers specific, actionable advice. Keep it under 200 words, avoiding generic statements."
+# Function to process the user's query, save the embedding to Pinecone, and retrieve similar responses
+def run_therapist_agent(user_query):
+    # # Generate embedding for the user query
+    # embedding = get_embedding(user_query)
 
-    if session_id:
-        # Continue the session using the provided session_id
-        agent_response = agent.run(prompt, session_id=session_id)
-    else:
-        # Start a new session
-        agent_response = agent.run(prompt)
+    # Save the query to Pinecone with a unique identifier
+    unique_id = str(uuid4())
+    index.upsert([(unique_id, user_query)])
 
-    # Extract the response and session ID
-    response = agent_response["data"]["output"]
-    session_id = agent_response["data"]["session_id"]
+    # Query Pinecone to find similar embeddings to provide a contextual response
+    results = index.query(vector=user_query, top_k=5, include_metadata=True)
+    response_text = " ".join(match['metadata'].get('text', '') for match in results['matches'])
 
-    if audio:
-       audio_wav = convert_text_to_audio(response)
-       audio_final_link = convert_with_synthesis(response)
-       return response, session_id, audio_final_link
+    return response_text
 
-    return response, session_id
-
-# Flask route to expose the AI therapist agent
-@app.route('/run_agent', methods=['POST'])
-def agent_endpoint():
-    # Extract data from the POST request
+# Single endpoint to handle query processing and response generation
+@app.route('/query', methods=['POST'])
+def query_theravoice():
     data = request.get_json()
-    user_query = data.get("user_query")
-    session_id = data.get("session_id", None)  # Session ID is passed from the client
-    audio = data.get("audio", False)
+    user_query = data.get("text")
 
-    # Run the agent
-    result = run_therapist_agent(user_query, audio=audio, session_id=session_id)
+    # Process the user query
+    response_text = run_therapist_agent(user_query)
 
-    if len(result) == 3:
-        response, session_id, audio_link = result
-        return jsonify({
-            "response": response,
-            "session_id": session_id,
-            "audio_link": audio_link
-        })
-    else:
-        response, session_id = result
-        return jsonify({
-            "response": response,
-            "session_id": session_id
-        })
+    return jsonify({"response": response_text})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
