@@ -95,7 +95,6 @@ class TheraVoiceViewModel: ObservableObject {
         
         // Only include health data every 5 messages
         var healthDataSection = ""
-        if messages.count % healthDataFrequency == 0 {
             let heartRates = heartRateData.map { sample in
                 "\(Int(sample.value)) BPM (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
             }.joined(separator: ", ")
@@ -110,7 +109,7 @@ class TheraVoiceViewModel: ObservableObject {
             Heart Rate: \(heartRates)
             Sleep: \(sleepStatuses)
             """
-        }
+        
         
         let combinedMessage = """
         Message: \(transcription)

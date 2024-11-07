@@ -264,6 +264,8 @@
 /* Begin XCBuildConfiguration section */
 		E7A4E5522CC58BF3000990A3 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = E7A4E5302CC58BF1000990A3 /* theravoice */;
+			baseConfigurationReferenceRelativePath = Environment.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -327,6 +329,8 @@
 		};
 		E7A4E5532CC58BF3000990A3 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = E7A4E5302CC58BF1000990A3 /* theravoice */;
+			baseConfigurationReferenceRelativePath = Environment.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -383,6 +387,8 @@
 		};
 		E7A4E5552CC58BF3000990A3 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = E7A4E5302CC58BF1000990A3 /* theravoice */;
+			baseConfigurationReferenceRelativePath = Environment.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -416,6 +422,8 @@
 		};
 		E7A4E5562CC58BF3000990A3 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = E7A4E5302CC58BF1000990A3 /* theravoice */;
+			baseConfigurationReferenceRelativePath = Environment.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
