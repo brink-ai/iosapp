@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		E7A4E5632CC58ED9000990A3 /* aiXplainKit in Frameworks */ = {isa = PBXBuildFile; productRef = E7A4E5622CC58ED9000990A3 /* aiXplainKit */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		E7A4E5412CC58BF3000990A3 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -47,7 +43,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E7A4E5632CC58ED9000990A3 /* aiXplainKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,7 +102,6 @@
 			);
 			name = theravoice;
 			packageProductDependencies = (
-				E7A4E5622CC58ED9000990A3 /* aiXplainKit */,
 			);
 			productName = vertical_ai_hackathon;
 			productReference = E7A4E52E2CC58BF1000990A3 /* theravoice.app */;
@@ -186,7 +180,6 @@
 			mainGroup = E7A4E5252CC58BF1000990A3;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E7A4E5612CC58ED9000990A3 /* XCRemoteSwiftPackageReference "aiXplainKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E7A4E52F2CC58BF1000990A3 /* Products */;
@@ -394,6 +387,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "theravoice-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = brink;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"Used to record audio for conversation\"";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "\"Used to transcribe input speech\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -427,6 +421,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "theravoice-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = brink;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"Used to record audio for conversation\"";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "\"Used to transcribe input speech\"";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -559,25 +554,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		E7A4E5612CC58ED9000990A3 /* XCRemoteSwiftPackageReference "aiXplainKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/aixplain/aiXplainKit";
-			requirement = {
-				branch = main;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		E7A4E5622CC58ED9000990A3 /* aiXplainKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E7A4E5612CC58ED9000990A3 /* XCRemoteSwiftPackageReference "aiXplainKit" */;
-			productName = aiXplainKit;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E7A4E5262CC58BF1000990A3 /* Project object */;
 }

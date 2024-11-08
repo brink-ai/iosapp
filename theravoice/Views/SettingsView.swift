@@ -25,9 +25,9 @@ struct SettingsView: View {
             Section(header: Text("Text-to-Speech").foregroundColor(.white)) {
                 Toggle(isOn: $isTTSModeEnabled) {
                     Text("Enable TTS")
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                 }
-                .tint(.white)
+                .tint(.gray)
             }
         }
         .navigationTitle("Settings")

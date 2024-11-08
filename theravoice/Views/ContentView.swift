@@ -9,21 +9,35 @@ struct ContentView: View {
     @State private var showingLiveTranscription = false // Start as false
     @State private var currentlyPlayingAudio: AVAudioPlayer?
 
-    init() {
-        let vm = TheraVoiceViewModel()
-        _viewModel = StateObject(wrappedValue: vm)
-        _audioManager = StateObject(wrappedValue: AudioManager(viewModel: vm))
-        
-        let appearance = UINavigationBarAppearance()
-        appearance.configureWithOpaqueBackground()
-        appearance.backgroundColor = UIColor(named: "Background")
-        appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
-        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        
-        UINavigationBar.appearance().standardAppearance = appearance
-        UINavigationBar.appearance().compactAppearance = appearance
-        UINavigationBar.appearance().scrollEdgeAppearance = appearance
-    }
+    init(generateTestData: Bool = true) {
+           let vm = TheraVoiceViewModel()
+           _viewModel = StateObject(wrappedValue: vm)
+           _audioManager = StateObject(wrappedValue: AudioManager(viewModel: vm))
+           
+           // Set up navigation bar appearance
+           let appearance = UINavigationBarAppearance()
+           appearance.configureWithOpaqueBackground()
+           appearance.backgroundColor = UIColor(named: "Background")
+           appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+           appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+           
+           UINavigationBar.appearance().standardAppearance = appearance
+           UINavigationBar.appearance().compactAppearance = appearance
+           UINavigationBar.appearance().scrollEdgeAppearance = appearance
+           
+           // Generate test data if requested
+           if generateTestData {
+               Task {
+                   do {
+                       let simulator = HealthDataSimulator()
+                       try await simulator.generateAllData()
+                       print("Successfully generated test health data")
+                   } catch {
+                       print("Error generating test health data: \(error)")
+                   }
+               }
+           }
+       }
     
     var body: some View {
         NavigationView {
@@ -64,7 +78,7 @@ struct ContentView: View {
                         .padding(.bottom)
                 }
             }
-            .navigationBarTitle("TheraVoice", displayMode: .inline)
+            .navigationBarTitle("brink", displayMode: .inline)
             .navigationBarItems(trailing: settingsButton)
             .sheet(isPresented: $isSettingsPresented) {
                 SettingsView(isTTSModeEnabled: $audioManager.isTTSModeEnabled, selectedModel: $audioManager.selectedModel)

@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "logo2.jpg",
+      "filename" : "brink_icon0.5x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,6 @@
           "value" : "dark"
         }
       ],
-      "filename" : "logo2 1.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +24,6 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "logo2 2.jpg",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

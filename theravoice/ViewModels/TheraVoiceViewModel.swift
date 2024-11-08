@@ -7,40 +7,65 @@ class TheraVoiceViewModel: ObservableObject {
     @Published var heartRateData: [(value: Double, startDate: Date, endDate: Date)] = []
     @Published var sleepData: [(stage: String, startDate: Date, endDate: Date)] = []
     
-    private let healthKitManager = HealthKitManager()
     private let groqMessages = GroqMessages.shared
     private let conversationWindowSize = 5
     private let healthDataFrequency = 5
     
     init() {
-        loadHealthData()
+        loadHardcodedData()
     }
     
-    func loadHealthData() {
-        healthKitManager.requestAuthorization { [weak self] success, error in
-            guard let self = self else { return }
+    private func loadHardcodedData() {
+        // Generate dates for the last 48 hours
+        let now = Date()
+        let calendar = Calendar.current
+        let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: now)!
+        
+        // Generate heart rate data every 30 minutes
+        var currentDate = twoDaysAgo
+        while currentDate <= now {
+            let hour = calendar.component(.hour, from: currentDate)
             
-            if success {
-                self.fetchHealthData()
-            } else if let error = error {
-                print("HealthKit Authorization Error: \(error.localizedDescription)")
+            // Simulate different heart rates based on time of day
+            let heartRate: Double
+            switch hour {
+            case 0...5: // Sleep
+                heartRate = Double.random(in: 55...65)
+            case 6...8: // Morning
+                heartRate = Double.random(in: 70...85)
+            case 9...17: // Day
+                heartRate = Double.random(in: 65...80)
+            case 18...21: // Evening
+                heartRate = Double.random(in: 75...90)
+            default: // Night
+                heartRate = Double.random(in: 60...75)
             }
-        }
-    }
-    
-    private func fetchHealthData() {
-        let twoDaysAgo = Calendar.current.date(byAdding: .day, value: -2, to: Date())!
-        let predicate = HKQuery.predicateForSamples(withStart: twoDaysAgo, end: Date(), options: .strictStartDate)
-        
-        healthKitManager.fetchHeartRateData(predicate: predicate) { [weak self] samples in
-            DispatchQueue.main.async {
-                self?.heartRateData = samples ?? []
-            }
+            
+            heartRateData.append((value: heartRate, startDate: currentDate, endDate: currentDate))
+            currentDate = calendar.date(byAdding: .minute, value: 30, to: currentDate)!
         }
         
-        healthKitManager.fetchSleepData(predicate: predicate) { [weak self] samples in
-            DispatchQueue.main.async {
-                self?.sleepData = samples ?? []
+        // Generate sleep data for two nights
+        let sleepStages = ["asleep", "inBed", "awake"]
+        
+        for dayOffset in 1...2 {
+            let dayStart = calendar.date(byAdding: .day, value: -dayOffset, to: now)!
+            let sleepStart = calendar.date(byAdding: .hour, value: 22, to: dayStart)! // 10 PM
+            let sleepEnd = calendar.date(byAdding: .hour, value: 8, to: sleepStart)! // 6 AM
+            
+            // Break sleep into 2-hour segments with different stages
+            var stageStart = sleepStart
+            while stageStart < sleepEnd {
+                let stageEnd = calendar.date(byAdding: .hour, value: 2, to: stageStart)!
+                let stage = sleepStages.randomElement()!
+                
+                sleepData.append((
+                    stage: stage,
+                    startDate: stageStart,
+                    endDate: min(stageEnd, sleepEnd)
+                ))
+                
+                stageStart = stageEnd
             }
         }
     }
@@ -49,11 +74,6 @@ class TheraVoiceViewModel: ObservableObject {
         DispatchQueue.main.async {
             if !self.messages.contains(where: { $0.text == message.text && $0.isUser == message.isUser }) {
                 self.messages.append(message)
-                
-                // Refresh health data every 5 messages
-                if self.messages.count % self.healthDataFrequency == 0 {
-                    self.fetchHealthData()
-                }
             }
         }
     }
@@ -93,24 +113,21 @@ class TheraVoiceViewModel: ObservableObject {
     func getCombinedDataString(withTranscription transcription: String) async -> String {
         let recentConversationSummary = await getRecentMessagesSummary()
         
-        // Only include health data every 5 messages
         var healthDataSection = ""
-        if messages.count % healthDataFrequency == 0 {
-            let heartRates = heartRateData.map { sample in
-                "\(Int(sample.value)) BPM (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
-            }.joined(separator: ", ")
-            
-            let sleepStatuses = sleepData.map { sample in
-                "\(sample.stage) (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
-            }.joined(separator: ", ")
-            
-            healthDataSection = """
-            
-            Health Data:
-            Heart Rate: \(heartRates)
-            Sleep: \(sleepStatuses)
-            """
-        }
+        let heartRates = heartRateData.map { sample in
+            "\(Int(sample.value)) BPM (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
+        }.joined(separator: ", ")
+        
+        let sleepStatuses = sleepData.map { sample in
+            "\(sample.stage) (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
+        }.joined(separator: ", ")
+        
+        healthDataSection = """
+        
+        Health Data:
+        Heart Rate: \(heartRates)
+        Sleep: \(sleepStatuses)
+        """
         
         let combinedMessage = """
         Message: \(transcription)

@@ -32,7 +32,6 @@ struct TheraVoiceView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
                     .padding(.bottom)
-                    
                 }
 
                 // Sleep Data Display with Chart
@@ -53,14 +52,10 @@ struct TheraVoiceView: View {
                     .background(Color(.systemGray6))
                     .cornerRadius(8)
                     .padding(.bottom)
-                    
-                    
                 }
             }
             .padding()
-            .onAppear {
-                viewModel.loadHealthData()
-            }
+            // Remove onAppear since we're using hardcoded data that loads in init
         }
     }
     
@@ -72,14 +67,12 @@ struct TheraVoiceView: View {
         return formatter.string(from: date)
     }
 
-    // Helper to convert sleep stage to a numeric value for charting purposes
+    // Updated helper to match our hardcoded sleep stages
     private func stageValue(_ stage: String) -> Int {
-        switch stage {
-        case "In Bed": return 1
-        case "Asleep": return 2
-        case "Core Sleep": return 3
-        case "Deep Sleep": return 4
-        case "REM Sleep": return 5
+        switch stage.lowercased() {
+        case "inbed": return 1
+        case "asleep": return 2
+        case "awake": return 3
         default: return 0
         }
     }
