@@ -9,7 +9,7 @@ struct ContentView: View {
     @State private var showingLiveTranscription = false // Start as false
     @State private var currentlyPlayingAudio: AVAudioPlayer?
 
-    init(generateTestData: Bool = true) {
+    init() {
            let vm = TheraVoiceViewModel()
            _viewModel = StateObject(wrappedValue: vm)
            _audioManager = StateObject(wrappedValue: AudioManager(viewModel: vm))
@@ -24,19 +24,7 @@ struct ContentView: View {
            UINavigationBar.appearance().standardAppearance = appearance
            UINavigationBar.appearance().compactAppearance = appearance
            UINavigationBar.appearance().scrollEdgeAppearance = appearance
-           
-           // Generate test data if requested
-           if generateTestData {
-               Task {
-                   do {
-                       let simulator = HealthDataSimulator()
-                       try await simulator.generateAllData()
-                       print("Successfully generated test health data")
-                   } catch {
-                       print("Error generating test health data: \(error)")
-                   }
-               }
-           }
+        
        }
     
     var body: some View {

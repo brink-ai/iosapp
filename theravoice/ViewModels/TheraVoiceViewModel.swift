@@ -1,71 +1,82 @@
+
 import Foundation
 import HealthKit
 
 class TheraVoiceViewModel: ObservableObject {
     @Published var messages: [Message] = []
     @Published var currentTranscription: String = ""
-    @Published var heartRateData: [(value: Double, startDate: Date, endDate: Date)] = []
-    @Published var sleepData: [(stage: String, startDate: Date, endDate: Date)] = []
+    @Published var insightsContent: String? // Store the raw content directly
     
+    private let useSimulatedData: Bool
     private let groqMessages = GroqMessages.shared
     private let conversationWindowSize = 5
-    private let healthDataFrequency = 5
-    
-    init() {
-        loadHardcodedData()
+    private let healthDataManager = HealthDataAnalysisManager()
+
+    init(useSimulatedData: Bool = true) {
+        self.useSimulatedData = useSimulatedData
+        loadData()
     }
     
-    private func loadHardcodedData() {
-        // Generate dates for the last 48 hours
-        let now = Date()
-        let calendar = Calendar.current
-        let twoDaysAgo = calendar.date(byAdding: .day, value: -2, to: now)!
-        
-        // Generate heart rate data every 30 minutes
-        var currentDate = twoDaysAgo
-        while currentDate <= now {
-            let hour = calendar.component(.hour, from: currentDate)
-            
-            // Simulate different heart rates based on time of day
-            let heartRate: Double
-            switch hour {
-            case 0...5: // Sleep
-                heartRate = Double.random(in: 55...65)
-            case 6...8: // Morning
-                heartRate = Double.random(in: 70...85)
-            case 9...17: // Day
-                heartRate = Double.random(in: 65...80)
-            case 18...21: // Evening
-                heartRate = Double.random(in: 75...90)
-            default: // Night
-                heartRate = Double.random(in: 60...75)
-            }
-            
-            heartRateData.append((value: heartRate, startDate: currentDate, endDate: currentDate))
-            currentDate = calendar.date(byAdding: .minute, value: 30, to: currentDate)!
+    private func loadData() {
+        if useSimulatedData {
+            loadSimulatedInsights()
+        } else {
+            loadRealInsights()
         }
-        
-        // Generate sleep data for two nights
-        let sleepStages = ["asleep", "inBed", "awake"]
-        
-        for dayOffset in 1...2 {
-            let dayStart = calendar.date(byAdding: .day, value: -dayOffset, to: now)!
-            let sleepStart = calendar.date(byAdding: .hour, value: 22, to: dayStart)! // 10 PM
-            let sleepEnd = calendar.date(byAdding: .hour, value: 8, to: sleepStart)! // 6 AM
-            
-            // Break sleep into 2-hour segments with different stages
-            var stageStart = sleepStart
-            while stageStart < sleepEnd {
-                let stageEnd = calendar.date(byAdding: .hour, value: 2, to: stageStart)!
-                let stage = sleepStages.randomElement()!
-                
-                sleepData.append((
-                    stage: stage,
-                    startDate: stageStart,
-                    endDate: min(stageEnd, sleepEnd)
-                ))
-                
-                stageStart = stageEnd
+    }
+
+    private func loadSimulatedInsights() {
+        insightsContent = """
+        {
+            "summary": "Stable heart rate and increasing sleep duration trends observed, potentially indicating improved cardiovascular health and enhanced sleep quality.",
+            "health_implications": {
+                "heart_rate": {
+                    "physical activity": "Stable heart rate may indicate a consistent level of physical activity, potentially supporting cardiovascular health.",
+                    "stress levels": "Stable heart rate could suggest a manageable stress level, but regular stress management techniques are still recommended to prevent burnout.",
+                    "cardiovascular health": "The stable trend may indicate a healthy cardiovascular profile, but regular check-ups are still necessary to monitor overall heart function."
+                },
+                "sleep": {
+                    "energy levels": "Increasing sleep duration might lead to improved energy levels, enhanced cognitive function, and better emotional regulation.",
+                    "cognitive function": "Extended sleep periods could positively impact attention, memory, and problem-solving skills.",
+                    "emotional health": "Better sleep quality may contribute to a more stable emotional state, reduced anxiety, and improved mood."
+                }
+            },
+            "recommendations": {
+                "heart_rate": {
+                    "stress management": "Recommend relaxation techniques like meditation, yoga, or deep breathing exercises to manage stress.",
+                    "activity levels": "Suggest regular physical activity, such as brisk walking or jogging, to support cardiovascular health."
+                },
+                "sleep": {
+                    "sleep hygiene": "Recommend establishing a consistent sleep schedule, avoiding screens before bedtime, and creating a relaxing bedtime routine."
+                }
+            },
+            "risk_assessment": {
+                "heart_rate": {
+                    "low": "Potential benefits for cardiovascular health",
+                    "moderate": "No significant risks identified"
+                },
+                "sleep": {
+                    "low": "Enhanced sleep quality and energy levels",
+                    "moderate": "Potential benefits for cognitive function and emotional health"
+                }
+            },
+            "data_quality": {
+                "reliability": "Data appears reliable, but further monitoring of heart rate and sleep patterns is recommended to confirm trends."
+            },
+            "additional_notes": "It is essential to maintain regular check-ups with a healthcare provider to monitor overall health status and adjust the recommended lifestyle adjustments as needed."
+        }
+        """
+    }
+    
+    private func loadRealInsights() {
+        healthDataManager.analyzeHealthData { result in
+            switch result {
+            case .success(let content):
+                DispatchQueue.main.async {
+                    self.insightsContent = content
+                }
+            case .failure(let error):
+                print("Error fetching insights: \(error.localizedDescription)")
             }
         }
     }
@@ -93,10 +104,6 @@ class TheraVoiceViewModel: ObservableObject {
         }
     }
     
-    private func formatDateTime(_ date: Date) -> String {
-        return DateFormatter.localizedString(from: date, dateStyle: .short, timeStyle: .short)
-    }
-    
     private func getRecentMessagesSummary() async -> String {
         let recentMessages = messages.suffix(conversationWindowSize)
         let messagesText = recentMessages.map { $0.text }.joined(separator: " ")
@@ -113,27 +120,16 @@ class TheraVoiceViewModel: ObservableObject {
     func getCombinedDataString(withTranscription transcription: String) async -> String {
         let recentConversationSummary = await getRecentMessagesSummary()
         
-        var healthDataSection = ""
-        let heartRates = heartRateData.map { sample in
-            "\(Int(sample.value)) BPM (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
-        }.joined(separator: ", ")
-        
-        let sleepStatuses = sleepData.map { sample in
-            "\(sample.stage) (\(formatDateTime(sample.startDate)) - \(formatDateTime(sample.endDate)))"
-        }.joined(separator: ", ")
-        
-        healthDataSection = """
-        
-        Health Data:
-        Heart Rate: \(heartRates)
-        Sleep: \(sleepStatuses)
-        """
+        let insightsSection = insightsContent ?? "Health Insights are unavailable."
         
         let combinedMessage = """
         Message: \(transcription)
         
         Recent Conversation Summary:
-        \(recentConversationSummary)\(healthDataSection)
+        \(recentConversationSummary)
+        
+        Health Insights:
+        \(insightsSection)
         """
         
         print("\n=== Combined Message for API ===")
